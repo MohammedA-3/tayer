@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>طاير — اشحن مع رحلة رايحة أصلاً</title>
+<meta name="theme-color" content="#0284c7">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="طاير">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --sky:#0ea5e9; --sky-d:#0284c7; --sky-l:#e0f2fe;
+  --ink:#0f172a; --mut:#64748b; --line:#e2e8f0;
+  --bg:#f1f5f9; --card:#ffffff;
+  --ok:#10b981; --ok-l:#d1fae5;
+  --warn:#f59e0b; --warn-l:#fef3c7;
+  --bad:#ef4444; --bad-l:#fee2e2;
+  --r:16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,'Noto Kufi Arabic',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#cbd5e1;display:flex;justify-content:center;min-height:100vh}
+#phone{width:100%;max-width:430px;height:100vh;background:var(--bg);position:relative;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.25);overflow:hidden}
+@media(min-width:500px){
+  body{align-items:center;padding:16px 0}
+  #phone{height:min(94vh,900px);border-radius:38px;border:8px solid #1e293b;box-shadow:0 30px 70px rgba(15,23,42,.45)}
+}
+.screen{display:none;flex:1;min-height:0;flex-direction:column;padding-bottom:100px;overflow-y:auto;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.screen.on{display:flex}
+/* ---------- header ---------- */
+.hd{background:linear-gradient(135deg,var(--sky-d),var(--sky));color:#fff;padding:18px 20px 22px;border-radius:0 0 24px 24px}
+.hd h1{font-size:20px;display:flex;align-items:center;gap:8px}
+.hd .sub{font-size:12.5px;opacity:.9;margin-top:3px}
+.hd-row{display:flex;justify-content:space-between;align-items:center}
+.bell{background:rgba(255,255,255,.18);border:none;color:#fff;width:38px;height:38px;border-radius:12px;font-size:17px;position:relative;cursor:pointer}
+.bell .dot{position:absolute;top:8px;left:9px;width:8px;height:8px;background:#f43f5e;border-radius:50%}
+/* ---------- role switch ---------- */
+.roleswitch{display:flex;background:rgba(255,255,255,.16);border-radius:12px;padding:4px;margin-top:14px}
+.roleswitch button{flex:1;border:none;background:transparent;color:#fff;padding:8px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;opacity:.75}
+.roleswitch button.act{background:#fff;color:var(--sky-d);opacity:1}
+/* ---------- generic ---------- */
+.wrap{padding:16px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.sec-t{font-size:14px;font-weight:700;color:var(--ink);margin:6px 2px 10px}
+.mut{color:var(--mut);font-size:12.5px}
+.btn{display:block;width:100%;border:none;background:var(--sky);color:#fff;padding:14px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:.15s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--sky-l);color:var(--sky-d)}
+.btn.green{background:var(--ok)}
+.btn.sm{padding:10px;font-size:13.5px;border-radius:11px}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.chip{display:inline-block;padding:4px 10px;border-radius:99px;font-size:11.5px;font-weight:700}
+.chip.blue{background:var(--sky-l);color:var(--sky-d)}
+.chip.ok{background:var(--ok-l);color:#047857}
+.chip.warn{background:var(--warn-l);color:#b45309}
+.chip.bad{background:var(--bad-l);color:#b91c1c}
+input,select,textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;background:#fff;color:var(--ink);margin-bottom:10px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sky)}
+label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px 2px 6px}
+/* ---------- bottom nav ---------- */
+#nav{position:absolute;bottom:0;right:0;left:0;background:#fff;display:flex;border-top:1px solid var(--line);padding:8px 4px calc(10px + env(safe-area-inset-bottom));z-index:50}
+#nav button{flex:1;border:none;background:none;color:var(--mut);font-size:10.5px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+#nav button .ic{font-size:20px}
+#nav button.act{color:var(--sky-d)}
+/* ---------- splash ---------- */
+#splash{position:absolute;inset:0;background:linear-gradient(160deg,#0284c7,#0ea5e9 55%,#38bdf8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;color:#fff;text-align:center;padding:30px;overflow-y:auto}
+#splash .logo{font-size:64px;animation:fly 2.5s ease-in-out infinite}
+@keyframes fly{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-14px) rotate(4deg)}}
+#splash h1{font-size:38px;margin:10px 0 6px}
+#splash p{font-size:15px;opacity:.92;line-height:1.8;margin-bottom:34px}
+.rolecard{background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.35);border-radius:18px;padding:16px;width:100%;margin-bottom:12px;color:#fff;text-align:right;cursor:pointer;display:flex;align-items:center;gap:14px;transition:.15s}
+.rolecard:active{transform:scale(.97);background:rgba(255,255,255,.25)}
+/* ---------- gates (login/otp/reg/pending) ---------- */
+.gate{position:absolute;inset:0;background:var(--bg);z-index:95;display:none;flex-direction:column;overflow-y:auto;scrollbar-width:none}
+.gate::-webkit-scrollbar{display:none}
+.gate.on{display:flex}
+.otprow{display:flex;gap:10px;justify-content:center;margin:16px 0 10px}
+.otpbox{width:54px;height:62px;text-align:center;font-size:26px;font-weight:800;margin-bottom:0;direction:ltr}
+#sms{position:absolute;top:10px;right:12px;left:12px;background:rgba(15,23,42,.94);color:#fff;border-radius:16px;padding:11px 14px;display:flex;gap:10px;align-items:center;z-index:300;transform:translateY(-140%);transition:.5s cubic-bezier(.2,.9,.3,1.15);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+#sms.show{transform:translateY(0)}
+#sms .from{display:block;font-size:11px;opacity:.65}
+#sms .txt{font-size:13.5px;font-weight:700}
+.uptile{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--line);border-radius:12px;padding:11px 12px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.uptile:active{transform:scale(.98)}
+.uptile.done{border-style:solid;border-color:var(--ok);background:var(--ok-l)}
+.uptile .ic{font-size:26px;width:52px;text-align:center}
+.uptile img{width:52px;height:52px;object-fit:cover;border-radius:8px}
+.pulse-ic{font-size:56px;animation:pulseIc 1.6s infinite}
+@keyframes pulseIc{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.rolecard .ic{font-size:30px}
+.rolecard b{font-size:16px;display:block}
+.rolecard span{font-size:12px;opacity:.85}
+/* ---------- shipment / trip cards ---------- */
+.ship{display:flex;flex-direction:column;gap:8px}
+.ship .route{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:var(--ink)}
+.ship .route .arr{color:var(--sky);font-size:16px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut)}
+.price{font-size:16px;font-weight:800;color:var(--sky-d)}
+.hr{height:1px;background:var(--line);margin:10px 0}
+/* ---------- steps tracker ---------- */
+.steps{display:flex;flex-direction:column;gap:0;margin-top:6px}
+.step{display:flex;gap:12px;position:relative;padding-bottom:22px}
+.step:last-child{padding-bottom:0}
+.step .dotc{width:26px;display:flex;flex-direction:column;align-items:center}
+.step .d{width:14px;height:14px;border-radius:50%;background:var(--line);border:3px solid #fff;box-shadow:0 0 0 1.5px var(--line);z-index:1}
+.step.done .d{background:var(--ok);box-shadow:0 0 0 1.5px var(--ok)}
+.step.cur .d{background:var(--sky);box-shadow:0 0 0 1.5px var(--sky);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 1.5px var(--sky)}50%{box-shadow:0 0 0 6px rgba(14,165,233,.25)}100%{box-shadow:0 0 0 1.5px var(--sky)}}
+.step .ln{position:absolute;top:14px;right:12px;width:2px;bottom:0;background:var(--line)}
+.step.done .ln{background:var(--ok)}
+.step .tx b{font-size:13.5px;color:var(--ink);display:block}
+.step .tx span{font-size:11.5px;color:var(--mut)}
+/* ---------- QR ---------- */
+.qrbox{display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0}
+.qr{display:grid;grid-template-columns:repeat(21,1fr);width:190px;height:190px;background:#fff;padding:10px;border-radius:14px;border:1.5px solid var(--line)}
+.qr i{background:#fff}
+.qr i.f{background:var(--ink);border-radius:1px}
+.code{font-size:26px;font-weight:800;letter-spacing:8px;color:var(--sky-d);background:var(--sky-l);padding:8px 18px;border-radius:12px;direction:ltr}
+/* ---------- wallet ---------- */
+.balcard{background:linear-gradient(135deg,#0369a1,#0ea5e9);color:#fff;border-radius:20px;padding:22px;margin-bottom:14px}
+.balcard .b{font-size:34px;font-weight:800;margin:6px 0}
+.txn{display:flex;justify-content:space-between;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line);font-size:13px}
+.txn:last-child{border:none}
+.txn .amt.plus{color:var(--ok);font-weight:800}
+.txn .amt.minus{color:var(--bad);font-weight:800}
+/* ---------- toast & modal ---------- */
+#toast{position:absolute;bottom:100px;right:50%;transform:translateX(50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:99px;font-size:13.5px;z-index:200;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap;max-width:92%}
+#toast.show{opacity:1}
+.modal-bg{position:absolute;inset:0;background:rgba(15,23,42,.55);z-index:150;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.on{display:flex}
+.modal{background:#fff;width:100%;max-width:430px;border-radius:24px 24px 0 0;padding:22px;max-height:88vh;overflow-y:auto;animation:up .25s}
+@keyframes up{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h3{font-size:17px;margin-bottom:4px}
+.grab{width:44px;height:5px;background:var(--line);border-radius:99px;margin:0 auto 14px}
+/* stars */
+.stars{display:flex;gap:6px;justify-content:center;font-size:34px;cursor:pointer;margin:12px 0}
+.stars span{color:#cbd5e1;transition:.1s}
+.stars span.on{color:#f59e0b}
+/* map fake */
+.map{height:150px;border-radius:14px;background:
+ linear-gradient(rgba(224,242,254,.6),rgba(224,242,254,.6)),
+ repeating-linear-gradient(0deg,#dbeafe 0 2px,transparent 2px 34px),
+ repeating-linear-gradient(90deg,#dbeafe 0 2px,transparent 2px 34px),#eff6ff;
+ position:relative;overflow:hidden;margin-bottom:10px}
+.map .truck{position:absolute;font-size:26px;animation:drive 6s linear infinite}
+@keyframes drive{0%{right:6%;top:70%}50%{right:48%;top:38%}100%{right:86%;top:12%}}
+.map .pin{position:absolute;font-size:20px}
+.empty{text-align:center;padding:40px 20px;color:var(--mut)}
+.empty .ic{font-size:44px;margin-bottom:8px}
+.stat{flex:1;background:var(--card);border-radius:14px;padding:14px;text-align:center;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.stat b{font-size:20px;color:var(--sky-d);display:block}
+.stat span{font-size:11px;color:var(--mut)}
+.notif{display:flex;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line);font-size:13px}
+.notif .ic{font-size:20px}
+.notif b{display:block;font-size:13px}
+.notif span{font-size:11.5px;color:var(--mut)}
+.back{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 0 2px}
+</style>
+</head>
+<body>
+<div id="phone">
+
+<!-- ======== SPLASH / ROLE PICK ======== -->
+<div id="splash">
+  <div class="logo"><svg width="130" height="130" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 26 H21 M4 34 H13 M10 18 H18" stroke="rgba(255,255,255,.45)" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M46 45 L39 59 M55 45 L62 59" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>
+    <g>
+      <rect x="34" y="58" width="32" height="26" rx="4" fill="#e8ab5e"/>
+      <rect x="34" y="58" width="32" height="8" rx="4" fill="#cd8b41"/>
+      <rect x="48.2" y="58" width="3.6" height="26" fill="#aa6c2f" opacity=".6"/>
+      <path d="M39 72 h9" stroke="#c9873e" stroke-width="2.4" stroke-linecap="round"/>
+    </g>
+    <path d="M44 32 C37 15 47 5 61 7 C53 13 50 23 50 31 Z" fill="#d7effc"/>
+    <path d="M13 33 C20 30 27 31 32 35 L25 44 C20 41 15 37 13 33 Z" fill="#d7effc"/>
+    <path d="M22 38 C28 28 42 24 56 26 C67 27.5 74 31 74 35.5 C74 40 66 42.5 58 43.5 C45 46.5 31 45 22 38 Z" fill="#fff"/>
+    <circle cx="70" cy="31" r="8.2" fill="#fff"/>
+    <path d="M77.5 28.5 L87 32 L77.5 35.8 Z" fill="#fbbf24"/>
+    <circle cx="72.6" cy="29.6" r="2" fill="#0f172a"/>
+    <path d="M40 34 C34 16 50 4 66 7 C56 12 51 22 49 33 C46 35.2 42 35.2 40 34 Z" fill="#a5dcf9"/>
+    <path d="M30 42.5 C40 46.5 52 46.5 60 42.5 C52 48 38 48 30 42.5 Z" fill="#cde7f8"/>
+  </svg></div>
+  <h1>طاير</h1>
+  <p>اشحن أغراضك مع رحلة رايحة أصلاً..<br>أسرع، أرخص، وبدون شركات شحن<br>وتوصل خلال ساعات</p>
+  <button class="rolecard" onclick="pickRole('sender')"><span class="ic">📦</span><span><b>أنا مُرسل</b><span>أبي أرسل شحنة مع أقرب رحلة</span></span></button>
+  <button class="rolecard" onclick="pickRole('carrier')"><span class="ic">🚗</span><span><b>أنا ناقل</b><span>عندي رحلة وأبي أستفيد من المساحة</span></span></button>
+  <button class="rolecard" onclick="pickRole('store')"><span class="ic">🏪</span><span><b>متجر</b><span>أوصّل طلبات عملائي بين المدن</span></span></button>
+</div>
+
+<!-- ======== SMS BANNER ======== -->
+<div id="sms"><span style="font-size:22px">💬</span><div><span class="from">الرسائل · TAYER</span><span class="txt" id="sms-txt"></span></div></div>
+
+<!-- ======== GATE: LOGIN ======== -->
+<div class="gate" id="gt-login">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="backToSplash()">→</button> تسجيل الدخول</h1></div></div>
+  <div class="wrap">
+    <div class="card" style="text-align:center">
+      <div style="font-size:40px;margin-bottom:4px" id="lg-icon">📦</div>
+      <b id="lg-role" style="font-size:15px">حساب مرسل</b>
+      <div class="mut" style="margin-top:4px">أدخل رقم جوالك وبنرسل لك رمز تحقق برسالة SMS</div>
+    </div>
+    <div class="card">
+      <label>رقم الجوال</label>
+      <div class="row" style="direction:ltr">
+        <input value="+966" disabled style="flex:0 0 86px;text-align:center;font-weight:700">
+        <input id="lg-phone" type="tel" inputmode="numeric" maxlength="9" placeholder="5XXXXXXXX" style="text-align:left;letter-spacing:2px">
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:400;font-size:12px;color:var(--mut);margin-top:4px">
+        <input type="checkbox" id="lg-terms" style="width:auto;margin:0"> أوافق على شروط الاستخدام وسياسة الخصوصية
+      </label>
+    </div>
+    <button class="btn" onclick="sendOtp()">📩 أرسل رمز التحقق</button>
+  </div>
+</div>
+
+<!-- ======== GATE: OTP ======== -->
+<div class="gate" id="gt-otp">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="openGate('login')">→</button> رمز التحقق</h1></div></div>
+  <div class="wrap">
+    <div class="card" style="text-align:center">
+      <div style="font-size:36px">🔐</div>
+      <b style="font-size:14.5px">أدخل الرمز المرسل إلى <span id="otp-phone" style="direction:ltr;display:inline-block;color:var(--sky-d)"></span></b>
+      <div class="otprow">
+        <input class="otpbox" maxlength="1" inputmode="numeric">
+        <input class="otpbox" maxlength="1" inputmode="numeric">
+        <input class="otpbox" maxlength="1" inputmode="numeric">
+        <input class="otpbox" maxlength="1" inputmode="numeric">
+      </div>
+      <div class="mut">ما وصلك الرمز؟ <a href="#" onclick="resendOtp();return false" style="color:var(--sky-d);font-weight:700">أعد الإرسال</a></div>
+    </div>
+    <button class="btn" onclick="verifyOtp()">تحقق وادخل</button>
+  </div>
+</div>
+
+<!-- ======== GATE: CARRIER REGISTRATION ======== -->
+<div class="gate" id="gt-carreg">
+  <div class="hd">
+    <div class="hd-row"><h1><button class="back" onclick="openGate('otp')">→</button> تسجيل ناقل جديد</h1></div>
+    <div class="sub" style="margin-top:6px">عبّي بياناتك وارفع المستندات — التفعيل بعد مراجعة الإدارة</div>
+  </div>
+  <div class="wrap">
+    <div class="sec-t">البيانات الشخصية</div>
+    <div class="card">
+      <label>الاسم الثلاثي</label>
+      <input id="cr-name" placeholder="مثال: محمد عبدالله العتيبي">
+      <label>رقم الهوية / الإقامة</label>
+      <input id="cr-id" inputmode="numeric" maxlength="10" placeholder="1XXXXXXXXX">
+      <label>رقم الجوال (موثّق)</label>
+      <input id="cr-phone" disabled>
+    </div>
+    <div class="sec-t">بيانات المركبة</div>
+    <div class="card">
+      <label>نوع وموديل المركبة</label>
+      <input id="cr-car" placeholder="مثال: كامري 2023">
+      <label>رقم اللوحة</label>
+      <div class="row">
+        <input id="cr-pl-l" placeholder="الحروف: أ ب ج" style="text-align:center">
+        <input id="cr-pl-n" inputmode="numeric" maxlength="4" placeholder="الأرقام: 1234" style="text-align:center">
+      </div>
+    </div>
+    <div class="sec-t">المستندات المطلوبة</div>
+    <div class="card">
+      <div class="uptile" id="up-car" onclick="document.getElementById('f-car').click()">
+        <span class="ic">📷</span>
+        <div style="flex:1"><b style="font-size:13.5px">صورة المركبة</b><div class="mut" id="up-car-t">صوّرها الآن بالكاميرا</div></div>
+        <span class="chip warn" id="up-car-c">مطلوب</span>
+      </div>
+      <div class="uptile" id="up-form" onclick="document.getElementById('f-form').click()">
+        <span class="ic">📋</span>
+        <div style="flex:1"><b style="font-size:13.5px">نسخة الاستمارة</b><div class="mut" id="up-form-t">صورة أو PDF</div></div>
+        <span class="chip warn" id="up-form-c">مطلوب</span>
+      </div>
+      <div class="uptile" id="up-lic" onclick="document.getElementById('f-lic').click()">
+        <span class="ic">🪪</span>
+        <div style="flex:1"><b style="font-size:13.5px">رخصة سير المركبة</b><div class="mut" id="up-lic-t">صورة أو PDF</div></div>
+        <span class="chip warn" id="up-lic-c">مطلوب</span>
+      </div>
+      <input type="file" id="f-car" accept="image/*" capture="environment" hidden onchange="pickDoc(this,'car')">
+      <input type="file" id="f-form" accept="image/*,.pdf" hidden onchange="pickDoc(this,'form')">
+      <input type="file" id="f-lic" accept="image/*,.pdf" hidden onchange="pickDoc(this,'lic')">
+    </div>
+    <button class="btn" onclick="submitCarrier()">🚗 أرسل طلب التسجيل</button>
+    <div class="mut" style="text-align:center;margin-top:8px;margin-bottom:16px">بإرسالك الطلب تقر بصحة البيانات والمستندات المرفوعة</div>
+  </div>
+</div>
+
+<!-- ======== GATE: PENDING APPROVAL ======== -->
+<div class="gate" id="gt-pending">
+  <div class="hd"><div class="hd-row"><h1>طلبك قيد المراجعة</h1></div></div>
+  <div class="wrap">
+    <div class="card" style="text-align:center;padding:26px 16px">
+      <div class="pulse-ic">⏳</div>
+      <b style="font-size:16px">استلمنا طلب تسجيلك كناقل</b>
+      <div class="mut" style="margin-top:6px;line-height:1.8">نراجع بياناتك ومستنداتك عادةً خلال ٢٤ ساعة،<br>وبتوصلك رسالة SMS فور تفعيل حسابك</div>
+    </div>
+    <div class="card">
+      <div class="steps">
+        <div class="step done"><span class="ln"></span><div class="dotc"><div class="d"></div></div><div class="tx"><b>تم استلام الطلب</b><span>بياناتك ومستنداتك وصلت للإدارة</span></div></div>
+        <div class="step cur"><span class="ln"></span><div class="dotc"><div class="d"></div></div><div class="tx"><b>مراجعة المستندات</b><span>التحقق من الاستمارة والرخصة واللوحة</span></div></div>
+        <div class="step"><div class="dotc"><div class="d"></div></div><div class="tx"><b>تفعيل الحساب</b><span>تستقبل الشحنات وتبدأ تربح</span></div></div>
+      </div>
+    </div>
+    <button class="btn ghost sm" onclick="approveDemo()">⏩ (تجربة) وصلتك رسالة التفعيل</button>
+    <div style="height:8px"></div>
+    <button class="btn sm" onclick="openGate(null);setRole('sender')">تصفح كمرسل لين يتفعل حسابك</button>
+  </div>
+</div>
+
+<!-- ======== HOME ======== -->
+<div class="screen on" id="sc-home">
+  <div class="hd">
+    <div class="hd-row">
+      <div><h1><svg width="34" height="34" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M46 45 L39 59 M55 45 L62 59" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>
+        <g>
+          <rect x="34" y="58" width="32" height="26" rx="4" fill="#e8ab5e"/>
+          <rect x="34" y="58" width="32" height="8" rx="4" fill="#cd8b41"/>
+          <rect x="48.2" y="58" width="3.6" height="26" fill="#aa6c2f" opacity=".6"/>
+        </g>
+        <path d="M44 32 C37 15 47 5 61 7 C53 13 50 23 50 31 Z" fill="#d7effc"/>
+        <path d="M13 33 C20 30 27 31 32 35 L25 44 C20 41 15 37 13 33 Z" fill="#d7effc"/>
+        <path d="M22 38 C28 28 42 24 56 26 C67 27.5 74 31 74 35.5 C74 40 66 42.5 58 43.5 C45 46.5 31 45 22 38 Z" fill="#fff"/>
+        <circle cx="70" cy="31" r="8.2" fill="#fff"/>
+        <path d="M77.5 28.5 L87 32 L77.5 35.8 Z" fill="#fbbf24"/>
+        <circle cx="72.6" cy="29.6" r="2" fill="#0f172a"/>
+        <path d="M40 34 C34 16 50 4 66 7 C56 12 51 22 49 33 C46 35.2 42 35.2 40 34 Z" fill="#a5dcf9"/>
+      </svg> طاير</h1><div class="sub" id="hd-sub">أهلًا محمد 👋</div></div>
+      <button class="bell" onclick="go('notif')">🔔<span class="dot"></span></button>
+    </div>
+    <div class="roleswitch">
+      <button id="rs-sender" onclick="setRole('sender')">📦 مرسل</button>
+      <button id="rs-carrier" onclick="setRole('carrier')">🚗 ناقل</button>
+      <button id="rs-store" onclick="setRole('store')">🏪 متجر</button>
+    </div>
+  </div>
+  <div class="wrap" id="home-body"></div>
+</div>
+
+<!-- ======== NEW SHIPMENT ======== -->
+<div class="screen" id="sc-newship">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('home')">→</button> طلب شحن جديد</h1></div></div>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div><label>مدينة الاستلام</label><select id="f-from"><option>الرياض</option><option>جدة</option><option>الدمام</option><option>أبها</option><option>القصيم</option><option>المدينة</option></select></div>
+        <div><label>مدينة التسليم</label><select id="f-to"><option>جدة</option><option>الرياض</option><option>الدمام</option><option>أبها</option><option>القصيم</option><option>المدينة</option></select></div>
+      </div>
+      <label>وصف الشحنة</label>
+      <input id="f-desc" placeholder="مثال: كرتون أغراض شخصية">
+      <div class="row">
+        <div><label>الوزن (كجم)</label><input id="f-w" type="number" placeholder="12"></div>
+        <div><label>القيمة التقريبية (﷼)</label><input type="number" placeholder="500"></div>
+      </div>
+      <div class="row">
+        <div><label>موعد الاستلام</label><input type="date" value="2026-07-28"></div>
+        <div><label>آخر موعد للتسليم</label><input type="date" value="2026-07-30"></div>
+      </div>
+      <label>صور الشحنة</label>
+      <button class="btn ghost sm" onclick="toast('📷 تم إرفاق صورتين')">＋ إضافة صور</button>
+      <div style="height:10px"></div>
+      <label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;font-size:12px;color:var(--mut)">
+        <input type="checkbox" id="f-ack" style="width:auto;margin:2px 0 0"> أُقرّ بأن الشحنة نظامية وأن الوصف والصور مطابقة للمحتوى، وأتحمل مسؤولية مخالفة ذلك.
+      </label>
+    </div>
+    <button class="btn" onclick="createShipment()">📡 انشر الطلب واستقبل العروض</button>
+  </div>
+</div>
+
+<!-- ======== OFFERS (sender) ======== -->
+<div class="screen" id="sc-offers">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('list')">→</button> عروض الناقلين</h1></div></div>
+  <div class="wrap" id="offers-body"></div>
+</div>
+
+<!-- ======== NEW TRIP (carrier) ======== -->
+<div class="screen" id="sc-newtrip">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('home')">→</button> إضافة رحلة</h1></div></div>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div><label>من</label><select id="t-from"><option>الرياض</option><option>جدة</option><option>الدمام</option><option>أبها</option></select></div>
+        <div><label>إلى</label><select id="t-to"><option>جدة</option><option>الرياض</option><option>الدمام</option><option>أبها</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>تاريخ المغادرة</label><input type="date" value="2026-07-28"></div>
+        <div><label>الوقت</label><input type="time" value="16:00"></div>
+      </div>
+      <label>نوع المركبة</label>
+      <select><option>سيدان</option><option>جيب / SUV</option><option>وانيت</option><option>باص</option><option>دينة</option></select>
+      <div class="row">
+        <div><label>المساحة المتوفرة</label><select><option>شنطة السيارة</option><option>نص الحمولة</option><option>حمولة كاملة</option></select></div>
+        <div><label>أقصى وزن (كجم)</label><input type="number" value="40"></div>
+      </div>
+    </div>
+    <button class="btn" onclick="createTrip()">🚗 انشر الرحلة</button>
+  </div>
+</div>
+
+<!-- ======== SHIPMENTS / TRIPS TAB ======== -->
+<div class="screen" id="sc-list">
+  <div class="hd"><div class="hd-row"><h1 id="list-title">شحناتي</h1></div></div>
+  <div class="wrap" id="list-body"></div>
+</div>
+
+<!-- ======== SHIPMENT DETAIL / TRACKING ======== -->
+<div class="screen" id="sc-track">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('list')">→</button> تتبع الشحنة</h1></div></div>
+  <div class="wrap" id="track-body"></div>
+</div>
+
+<!-- ======== WALLET ======== -->
+<div class="screen" id="sc-wallet">
+  <div class="hd"><div class="hd-row"><h1>المحفظة</h1></div></div>
+  <div class="wrap">
+    <div class="balcard">
+      <div style="font-size:12.5px;opacity:.85">الرصيد المتاح</div>
+      <div class="b" id="w-bal">340.00 ﷼</div>
+      <div style="font-size:11.5px;opacity:.8">💡 المبالغ تُحجز عند الدفع ولا تُحوَّل للناقل إلا بعد تأكيد التسليم</div>
+    </div>
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn sm ghost" onclick="toast('🏦 تحويل لحسابك البنكي خلال يوم عمل')">سحب الرصيد</button>
+      <button class="btn sm" onclick="toast('💳 شحن المحفظة عبر مدى / Apple Pay')">شحن المحفظة</button>
+    </div>
+    <div class="card">
+      <div class="sec-t" style="margin-top:0">العمليات</div>
+      <div class="txn"><div><b>أجرة توصيل — الرياض ← جدة</b><div class="mut">اليوم · بعد خصم عمولة 15%</div></div><div class="amt plus">+68 ﷼</div></div>
+      <div class="txn"><div><b>حجز مبلغ شحنة #4821</b><div class="mut">أمس · بانتظار التسليم</div></div><div class="amt minus">-80 ﷼</div></div>
+      <div class="txn"><div><b>أجرة توصيل — الدمام ← الرياض</b><div class="mut">قبل 3 أيام</div></div><div class="amt plus">+51 ﷼</div></div>
+      <div class="txn"><div><b>شحن محفظة (مدى)</b><div class="mut">قبل أسبوع</div></div><div class="amt plus">+300 ﷼</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== NOTIFICATIONS ======== -->
+<div class="screen" id="sc-notif">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('home')">→</button> الإشعارات</h1></div></div>
+  <div class="wrap">
+    <div class="card">
+      <div class="notif"><span class="ic">✅</span><div><b>تم تسليم شحنتك بنجاح</b><span>شحنة #4818 — استلمها خالد في جدة · قبل ساعتين</span></div></div>
+      <div class="notif"><span class="ic">🚗</span><div><b>الناقل في الطريق</b><span>عبدالله انطلق من الرياض · قبل 4 ساعات</span></div></div>
+      <div class="notif"><span class="ic">🤝</span><div><b>قبل ناقل شحنتك!</b><span>عبدالله السبيعي — رحلة الرياض ← جدة · أمس</span></div></div>
+      <div class="notif"><span class="ic">⭐</span><div><b>تقييم جديد</b><span>قيّمك سعد ⭐⭐⭐⭐⭐ «تعامل راقي» · قبل يومين</span></div></div>
+      <div class="notif"><span class="ic">💰</span><div><b>تم إيداع مستحقاتك</b><span>+68 ﷼ في محفظتك بعد اكتمال التسليم · قبل يومين</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== PROFILE ======== -->
+<div class="screen" id="sc-me">
+  <div class="hd"><div class="hd-row"><h1>حسابي</h1></div></div>
+  <div class="wrap">
+    <div class="card" style="display:flex;align-items:center;gap:14px">
+      <div style="width:58px;height:58px;border-radius:50%;background:var(--sky-l);display:flex;align-items:center;justify-content:center;font-size:26px">🧔</div>
+      <div style="flex:1">
+        <b style="font-size:16px">محمد العتيبي</b>
+        <div class="mut">⭐ 4.9 · عضو منذ مارس 2026</div>
+        <div style="margin-top:5px"><span class="chip ok">✓ الهوية موثقة</span> <span class="chip blue">✓ الجوال موثق</span></div>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <div class="stat"><b>23</b><span>شحنة مكتملة</span></div>
+      <div class="stat"><b>11</b><span>رحلة كناقل</span></div>
+      <div class="stat"><b>4.9</b><span>التقييم</span></div>
+    </div>
+    <div class="card">
+      <div class="txn"><div>🪪 توثيق حساب الناقل</div><span class="chip ok">مفعّل</span></div>
+      <div class="txn"><div>🚗 مركباتي (كامري 2023)</div><span class="mut">›</span></div>
+      <div class="txn"><div>🛡️ الأمان والبلاغات</div><span class="mut">›</span></div>
+      <div class="txn"><div>📄 شروط الاستخدام وسياسة الشحنات</div><span class="mut">›</span></div>
+      <div class="txn"><div>🎧 الدعم الفني</div><span class="mut">›</span></div>
+    </div>
+    <button class="btn ghost sm" onclick="location.reload()">تسجيل الخروج</button>
+  </div>
+</div>
+
+<!-- ======== NAV ======== -->
+<div id="nav">
+  <button data-s="home" class="act" onclick="go('home')"><span class="ic">🏠</span>الرئيسية</button>
+  <button data-s="list" onclick="go('list')"><span class="ic">📦</span><span id="nav-list-lbl">شحناتي</span></button>
+  <button data-s="wallet" onclick="go('wallet')"><span class="ic">👛</span>المحفظة</button>
+  <button data-s="me" onclick="go('me')"><span class="ic">👤</span>حسابي</button>
+</div>
+
+<!-- ======== MODALS ======== -->
+<div class="modal-bg" id="m-qr" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal">
+    <div class="grab"></div>
+    <h3 id="qr-title">🔐 رمز الاستلام</h3>
+    <p class="mut" id="qr-sub">اعرض هذا الرمز للناقل عند تسليمه الشحنة. لا تشاركه مع أحد قبل اللقاء.</p>
+    <div class="qrbox">
+      <div class="qr" id="qr-grid"></div>
+      <div class="code" id="qr-code">7 3 4 9</div>
+    </div>
+    <button class="btn sm ghost" onclick="document.getElementById('m-qr').classList.remove('on')">إغلاق</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-scan" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal">
+    <div class="grab"></div>
+    <h3 id="scan-title">📷 مسح رمز الاستلام</h3>
+    <p class="mut">امسح QR من جوال المرسل أو أدخل الرمز يدويًا:</p>
+    <div style="height:10px"></div>
+    <input id="scan-input" placeholder="أدخل الرمز — جرّب 7349" style="text-align:center;letter-spacing:6px;font-size:20px" maxlength="4" inputmode="numeric">
+    <button class="btn" onclick="confirmScan()">تأكيد</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-bid" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal">
+    <div class="grab"></div>
+    <h3>💰 قدّم عرضك</h3>
+    <p class="mut" id="bid-sub"></p>
+    <p class="mut" style="margin-top:4px">حدد المبلغ اللي توصّل فيه الشحنة — عمولة المنصة 15% تنخصم من العرض.</p>
+    <div style="height:12px"></div>
+    <input id="bid-input" type="number" inputmode="numeric" placeholder="مثال: 75" style="text-align:center;font-size:22px;font-weight:700">
+    <button class="btn" onclick="submitBid()">📨 إرسال العرض للمرسل</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-rate" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal">
+    <div class="grab"></div>
+    <h3 style="text-align:center">🎉 تم التسليم بنجاح!</h3>
+    <p class="mut" style="text-align:center">قيّم تجربتك مع عبدالله السبيعي</p>
+    <div class="stars" id="stars"><span onclick="rate(1)">★</span><span onclick="rate(2)">★</span><span onclick="rate(3)">★</span><span onclick="rate(4)">★</span><span onclick="rate(5)">★</span></div>
+    <textarea placeholder="أضف تعليقًا (اختياري)" rows="2"></textarea>
+    <button class="btn" onclick="document.getElementById('m-rate').classList.remove('on');toast('⭐ شكرًا لتقييمك!')">إرسال التقييم</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+</div>
+
+<script>
+/* ================= state ================= */
+let role='sender';
+const S={
+  shipments:[
+    {id:4825,from:'الرياض',to:'أبها',desc:'دراجة أطفال',w:14,price:null,status:0,code:'7349',offers:[
+      {n:'تركي الشهراني',r:4.7,car:'تاهو 2021',t:'بكرة 6:00ص',p:110,trips:19,note:'أمرّ عليك من طريق الملك فهد'},
+      {n:'ماجد عسيري',r:4.9,car:'وانيت هايلوكس',t:'بكرة 2:00م',p:95,trips:42,note:'راجع أبها فاضي — السعر قابل للنقاش'},
+    ]},
+    {id:4821,from:'الرياض',to:'جدة',desc:'كرتون أغراض شخصية',w:12,price:80,status:2,carrier:'عبدالله السبيعي',car:'كامري 2023',rating:4.8,code:'7349'},
+    {id:4818,from:'الرياض',to:'الدمام',desc:'شاشة 32 بوصة',w:8,price:65,status:4,carrier:'سعد القحطاني',car:'يوكن 2022',rating:5.0,code:'1182'},
+  ],
+  trips:[
+    {id:9012,from:'جدة',to:'الرياض',date:'الخميس 30 يوليو · 5:00م',car:'كامري 2023',cap:'شنطة السيارة',maxw:40,matched:2}
+  ],
+  carrierOffers:[
+    {id:5501,from:'جدة',to:'الرياض',desc:'شنطة ملابس',w:9,price:55,dist:'قريب من طريقك'},
+    {id:5502,from:'جدة',to:'الرياض',desc:'قطع غيار سيارة',w:15,price:75,dist:'على خط سيرك'},
+    {id:5503,from:'جدة',to:'القصيم',desc:'أجهزة منزلية صغيرة',w:20,price:120,dist:'انحراف 40 كم'},
+  ]
+};
+const STATUS=['بانتظار العروض','تم القبول','تم الاستلام','في الطريق','تم التسليم'];
+const SCHIP=['warn','blue','blue','blue','ok'];
+let activeShip=null, scanStage=1, nextId=4830, bidTarget=null;
+
+/* ================= auth & gates ================= */
+function sv(k,v){try{localStorage.setItem('tayer_'+k,v)}catch(e){}}
+function ld(k){try{return localStorage.getItem('tayer_'+k)}catch(e){return null}}
+let auth={phone:'',carrierStatus:ld('carrier')||'none'};
+let otpCode='', pendingRole='sender';
+const docs={car:false,form:false,lic:false};
+
+function pickRole(r){
+  pendingRole=r;
+  document.getElementById('splash').style.display='none';
+  document.getElementById('lg-icon').textContent = r==='sender'?'📦':r==='carrier'?'🚗':'🏪';
+  document.getElementById('lg-role').textContent = r==='sender'?'حساب مرسل':r==='carrier'?'حساب ناقل':'حساب متجر';
+  openGate('login');
+}
+function backToSplash(){openGate(null);document.getElementById('splash').style.display='flex';}
+function openGate(g){
+  document.querySelectorAll('.gate').forEach(e=>e.classList.remove('on'));
+  if(g)document.getElementById('gt-'+g).classList.add('on');
+}
+function fireSms(t){
+  document.getElementById('sms-txt').textContent=t;
+  const s=document.getElementById('sms');
+  setTimeout(()=>s.classList.add('show'),500);
+  clearTimeout(s._x);s._x=setTimeout(()=>s.classList.remove('show'),7000);
+}
+function sendOtp(){
+  const p=document.getElementById('lg-phone').value.trim();
+  if(!/^5\d{8}$/.test(p)){toast('⚠️ أدخل رقم جوال صحيح يبدأ بـ 5 (9 أرقام)');return;}
+  if(!document.getElementById('lg-terms').checked){toast('⚠️ لازم توافق على الشروط أولاً');return;}
+  auth.phone='+966'+p;
+  document.getElementById('otp-phone').textContent=auth.phone;
+  document.querySelectorAll('.otpbox').forEach(b=>b.value='');
+  openGate('otp');
+  otpCode=String(Math.floor(1000+Math.random()*9000));
+  fireSms('رمز تحقق طاير: '+otpCode+' — لا تشاركه مع أحد');
+  setTimeout(()=>document.querySelector('.otpbox').focus(),400);
+}
+function resendOtp(){
+  otpCode=String(Math.floor(1000+Math.random()*9000));
+  fireSms('رمز تحقق طاير: '+otpCode+' — لا تشاركه مع أحد');
+  toast('📩 أعدنا إرسال الرمز');
+}
+function verifyOtp(){
+  const v=[...document.querySelectorAll('.otpbox')].map(b=>b.value).join('');
+  if(v.length<4){toast('⚠️ أكمل الرمز المكوّن من 4 أرقام');return;}
+  if(v!==otpCode){toast('❌ الرمز غير صحيح — شوف رسالة SMS فوق');return;}
+  document.getElementById('sms').classList.remove('show');
+  if(pendingRole==='carrier'&&auth.carrierStatus!=='approved'){
+    document.getElementById('cr-phone').value=auth.phone;
+    openGate(auth.carrierStatus==='pending'?'pending':'carreg');
+    toast('✅ تم التحقق — أكمل تسجيل الناقل');
+  }else{
+    openGate(null);setRole(pendingRole);
+    toast('✅ تم تسجيل الدخول');
+  }
+}
+function pickDoc(inp,key){
+  if(!inp.files||!inp.files[0])return;
+  const f=inp.files[0];
+  docs[key]=true;
+  const tile=document.getElementById('up-'+key);
+  tile.classList.add('done');
+  const chip=document.getElementById('up-'+key+'-c');
+  chip.textContent='تم ✓';chip.className='chip ok';
+  const icon=tile.querySelector('.ic');
+  if(icon&&f.type.startsWith('image/')){
+    const img=document.createElement('img');img.src=URL.createObjectURL(f);icon.replaceWith(img);
+  }else if(icon){icon.textContent='📄';}
+  document.getElementById('up-'+key+'-t').textContent=f.name.length>26?f.name.slice(0,26)+'…':f.name;
+}
+function submitCarrier(){
+  const name=document.getElementById('cr-name').value.trim();
+  const id=document.getElementById('cr-id').value.trim();
+  const car=document.getElementById('cr-car').value.trim();
+  const pl=document.getElementById('cr-pl-l').value.trim();
+  const pn=document.getElementById('cr-pl-n').value.trim();
+  if(name.split(/\s+/).length<2){toast('⚠️ اكتب اسمك الكامل');return;}
+  if(!/^\d{10}$/.test(id)){toast('⚠️ رقم الهوية يتكون من 10 أرقام');return;}
+  if(!car){toast('⚠️ اكتب نوع وموديل المركبة');return;}
+  if(!pl||!/^\d{1,4}$/.test(pn)){toast('⚠️ أكمل رقم اللوحة (حروف وأرقام)');return;}
+  if(!docs.car){toast('⚠️ صوّر مركبتك أولاً');return;}
+  if(!docs.form){toast('⚠️ ارفع نسخة الاستمارة');return;}
+  if(!docs.lic){toast('⚠️ ارفع رخصة سير المركبة');return;}
+  auth.carrierStatus='pending';sv('carrier','pending');
+  openGate('pending');
+  toast('📨 أُرسل طلبك للمراجعة');
+}
+function approveDemo(){
+  auth.carrierStatus='approved';sv('carrier','approved');
+  fireSms('حيّاك في طاير 🎉 تم تفعيل حسابك كناقل — أضف رحلتك الأولى وابدأ تربح');
+  openGate(null);
+  setRole('carrier');
+  toast('🎉 تم تفعيل حسابك كناقل!');
+}
+
+/* ================= nav ================= */
+function setRole(r){
+  if(r==='carrier'&&auth.carrierStatus!=='approved'&&document.getElementById('splash').style.display==='none'){
+    document.getElementById('cr-phone').value=auth.phone||'';
+    openGate(auth.carrierStatus==='pending'?'pending':'carreg');
+    toast('🪪 حساب الناقل يحتاج تسجيل وتوثيق أولاً');
+    return;
+  }
+  role=r;
+  ['sender','carrier','store'].forEach(x=>document.getElementById('rs-'+x).classList.toggle('act',x===r));
+  document.getElementById('hd-sub').textContent = r==='sender'?'أهلًا محمد 👋 وش تبي ترسل اليوم؟': r==='carrier'?'أهلًا محمد 👋 رحلتك الجاية ممكن تربّحك':'أهلًا متجر روائع 👋';
+  document.getElementById('nav-list-lbl').textContent = r==='carrier'?'رحلاتي':'شحناتي';
+  renderHome();renderList();go('home');
+}
+function go(s){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('on'));
+  document.getElementById('sc-'+s).classList.add('on');
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('act',b.dataset.s===s));
+  document.getElementById('sc-'+s).scrollTop=0;
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* ================= home ================= */
+function renderHome(){
+  const h=document.getElementById('home-body');
+  if(role==='sender'||role==='store'){
+    const active=S.shipments.filter(s=>s.status<4);
+    h.innerHTML=`
+    ${role==='store'?`<div class="card" style="background:var(--sky-l);border:1.5px dashed var(--sky)"><b style="font-size:13.5px">🏪 حساب متجر</b><div class="mut" style="margin-top:4px">اربط متجرك عبر API وارفع طلبات عملائك دفعة واحدة — قريبًا رفع ملف Excel.</div></div>`:''}
+    <button class="btn" onclick="go('newship')" style="margin-bottom:14px">📦 أنشئ طلب شحن جديد</button>
+    <div class="sec-t">شحناتك النشطة</div>
+    ${active.length?active.map(shipCard).join(''):'<div class="empty"><div class="ic">📭</div>ما عندك شحنات نشطة</div>'}
+    <div class="sec-t">ليه طاير؟</div>
+    <div class="row" style="margin-bottom:12px">
+      <div class="stat"><b>60%</b><span>أوفر من الشحن التقليدي</span></div>
+      <div class="stat"><b>QR</b><span>استلام وتسليم موثّق</span></div>
+      <div class="stat"><b>🛡️</b><span>المبلغ محجوز حتى التسليم</span></div>
+    </div>
+    <div class="sec-t">أكثر المسارات نشاطًا اليوم</div>
+    <div class="card">
+      <div class="txn"><div>🛣️ الرياض ← جدة</div><span class="mut">34 رحلة متاحة · من 60 ﷼</span></div>
+      <div class="txn"><div>🛣️ الرياض ← الدمام</div><span class="mut">21 رحلة · من 45 ﷼</span></div>
+      <div class="txn"><div>🛣️ جدة ← مكة</div><span class="mut">18 رحلة · من 25 ﷼</span></div>
+      <div class="txn"><div>🛣️ الرياض ← القصيم</div><span class="mut">15 رحلة · من 40 ﷼</span></div>
+    </div>
+    <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:#fff7ed;border:1px solid #fed7aa">
+      <span style="font-size:22px">🛡️</span>
+      <div style="font-size:12.5px;color:#9a3412;line-height:1.7"><b>نصيحة أمان:</b> خلّ التواصل والدفع داخل التطبيق دايم — أي ناقل يطلب تحويل خارجي بلّغ عنه فورًا.</div>
+    </div>`;
+  } else {
+    h.innerHTML=`
+    <button class="btn" onclick="go('newtrip')" style="margin-bottom:14px">🚗 أضف رحلتك الجاية</button>
+    <div class="sec-t">شحنات على خط سيرك <span class="chip blue">جدة ← الرياض</span></div>
+    ${S.carrierOffers.map(o=>`
+      <div class="card ship">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="route">${o.from} <span class="arr">←</span> ${o.to}</div>
+          <div class="mut">ميزانية المرسل ≈ <b class="price" style="font-size:14px">${o.price} ﷼</b></div>
+        </div>
+        <div class="meta"><span>📦 ${o.desc}</span><span>⚖️ ${o.w} كجم</span><span>📍 ${o.dist}</span></div>
+        ${o.bid
+          ?`<span class="chip blue" style="align-self:flex-start">📨 عرضك: ${o.bid} ﷼ · بانتظار رد المرسل</span>`
+          :`<div class="row">
+              <button class="btn sm green" onclick="openBid(${o.id})">💰 قدّم عرضك</button>
+              <button class="btn sm ghost" onclick="toast('👀 التفاصيل والصور تظهر هنا')">التفاصيل</button>
+            </div>`}
+      </div>`).join('')}
+    <div class="sec-t">أرباحك هذا الشهر</div>
+    <div class="row" style="margin-bottom:12px"><div class="stat"><b>119 ﷼</b><span>صافي الأرباح</span></div><div class="stat"><b>3</b><span>شحنات وصّلتها</span></div><div class="stat"><b>4.9 ⭐</b><span>تقييمك</span></div></div>
+    <div class="sec-t">أعلى المسارات طلبًا</div>
+    <div class="card">
+      <div class="txn"><div>🔥 الرياض ← جدة</div><span class="mut">57 شحنة تنتظر · متوسط 75 ﷼</span></div>
+      <div class="txn"><div>🔥 جدة ← الرياض</div><span class="mut">44 شحنة · متوسط 70 ﷼</span></div>
+      <div class="txn"><div>🔥 الدمام ← الرياض</div><span class="mut">29 شحنة · متوسط 55 ﷼</span></div>
+    </div>
+    <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:var(--sky-l)">
+      <span style="font-size:22px">💡</span>
+      <div style="font-size:12.5px;color:#075985;line-height:1.7"><b>زوّد أرباحك:</b> أضف رحلاتك القادمة بدري — الشحنات تنحجز قبل الرحلة بيوم أو يومين غالبًا.</div>
+    </div>`;
+  }
+}
+function shipCard(s){
+  const chip = s.status===0
+    ? `<span class="chip ${s.offers.length?'ok':'warn'}">📨 ${s.offers.length?s.offers.length+' عروض':'بانتظار العروض'}</span>`
+    : `<span class="chip ${SCHIP[s.status]}">${STATUS[s.status]}</span>`;
+  return `<div class="card ship" onclick="openShip(${s.id})" style="cursor:pointer">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="route">${s.from} <span class="arr">←</span> ${s.to}</div>
+      ${chip}
+    </div>
+    <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span>${s.price?`<span class="price" style="font-size:13px">${s.price} ﷼</span>`:''}</div>
+  </div>`;
+}
+function openShip(id){
+  const s=S.shipments.find(x=>x.id===id);
+  if(s.status===0)openOffers(id);else openTrack(id);
+}
+
+/* ================= list tab ================= */
+function renderList(){
+  const b=document.getElementById('list-body');
+  document.getElementById('list-title').textContent = role==='carrier'?'رحلاتي':'شحناتي';
+  if(role==='carrier'){
+    b.innerHTML = S.trips.map(t=>`
+      <div class="card ship">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="route">${t.from} <span class="arr">←</span> ${t.to}</div>
+          <span class="chip blue">${t.matched} شحنة مطابقة</span>
+        </div>
+        <div class="meta"><span>🗓️ ${t.date}</span><span>🚗 ${t.car}</span><span>📦 ${t.cap}</span><span>⚖️ حتى ${t.maxw} كجم</span></div>
+        <button class="btn sm ghost" onclick="go('home');toast('الشحنات المطابقة في الرئيسية')">عرض الشحنات المطابقة</button>
+      </div>`).join('') + `<button class="btn" onclick="go('newtrip')">＋ رحلة جديدة</button>`;
+  } else {
+    b.innerHTML = S.shipments.map(shipCard).join('') + `<button class="btn" onclick="go('newship')">＋ طلب شحن جديد</button>`;
+  }
+}
+
+/* ================= create flows ================= */
+function createShipment(){
+  if(!document.getElementById('f-ack').checked){toast('⚠️ لازم توافق على إقرار الشحنة أولاً');return;}
+  const from=document.getElementById('f-from').value,to=document.getElementById('f-to').value;
+  if(from===to){toast('⚠️ مدينة الاستلام والتسليم متطابقة');return;}
+  const desc=document.getElementById('f-desc').value||'شحنة جديدة';
+  const w=document.getElementById('f-w').value||10;
+  const s={id:nextId++,from,to,desc,w,price:null,status:0,code:'7349',offers:[]};
+  S.shipments.unshift(s);
+  renderHome();renderList();
+  openOffers(s.id);
+  toast('📡 انتشر طلبك! بنبلغك أول ما توصلك عروض');
+  const incoming=[
+    {d:2000,o:{n:'عبدالله السبيعي',r:4.8,car:'كامري 2023',t:'اليوم 4:00م',p:80,trips:31,note:'طريقي عليك مباشرة'}},
+    {d:4500,o:{n:'فهد الدوسري',r:4.6,car:'تاهو 2021',t:'اليوم 9:30م',p:70,trips:12,note:'أوصلها لباب البيت'}},
+    {d:7500,o:{n:'نايف المطيري',r:5.0,car:'وانيت هايلوكس',t:'بكرة 7:00ص',p:95,trips:54,note:'حمولة واسعة ومؤمّنة'}},
+  ];
+  incoming.forEach(x=>setTimeout(()=>{
+    if(s.status!==0)return;
+    s.offers.push(x.o);
+    toast('📨 وصلك عرض جديد من '+x.o.n);
+    if(activeShip===s&&document.getElementById('sc-offers').classList.contains('on'))renderOffers();
+    renderHome();renderList();
+  },x.d));
+}
+function openOffers(id){
+  activeShip=S.shipments.find(x=>x.id===id);
+  renderOffers();
+  go('offers');
+}
+function renderOffers(){
+  const s=activeShip;
+  document.getElementById('offers-body').innerHTML=`
+    <div class="card ship">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="route">${s.from} <span class="arr">←</span> ${s.to}</div>
+        <span class="chip warn">طلبك منشور</span>
+      </div>
+      <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span></div>
+    </div>
+    <div class="sec-t">العروض الواصلة (${s.offers.length})</div>
+    ${s.offers.length?s.offers.map((o,i)=>`
+    <div class="card ship">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="width:42px;height:42px;border-radius:50%;background:var(--sky-l);display:flex;align-items:center;justify-content:center;font-size:19px">🧔</div>
+          <div><b style="font-size:14px">${o.n}</b><div class="mut">⭐ ${o.r} · ${o.trips} رحلة · ✓ موثق</div></div>
+        </div>
+        <div class="price">${o.p} ﷼</div>
+      </div>
+      <div class="meta"><span>🚗 ${o.car}</span><span>🕓 ينطلق ${o.t}</span></div>
+      ${o.note?`<div class="mut" style="background:var(--bg);border-radius:10px;padding:8px 12px">💬 «${o.note}»</div>`:''}
+      <div class="row">
+        <button class="btn sm green" onclick="acceptBid(${i})">✓ اقبل — ادفع ${o.p} ﷼</button>
+        <button class="btn sm ghost" onclick="toast('💬 تقدر تفاوض الناقل داخل التطبيق')">فاوض</button>
+      </div>
+    </div>`).join('')
+    :`<div class="empty"><div class="ic">📡</div>طلبك وصل للناقلين على نفس الخط...<br>العروض بتظهر هنا أول بأول</div>`}
+  `;
+}
+function acceptBid(i){
+  const s=activeShip,o=s.offers[i];
+  s.carrier=o.n;s.car=o.car;s.rating=o.r;s.price=o.p;s.status=1;
+  toast('💳 تم الدفع وحجز '+o.p+' ﷼ حتى التسليم');
+  renderHome();renderList();
+  setTimeout(()=>openTrack(s.id),700);
+}
+function createTrip(){
+  toast('🚗 انتشرت رحلتك! جاري مطابقة الشحنات...');
+  setTimeout(()=>{go('home');renderHome();},900);
+}
+function openBid(id){
+  bidTarget=id;
+  const o=S.carrierOffers.find(x=>x.id===id);
+  document.getElementById('bid-sub').textContent=`${o.from} ← ${o.to} · ${o.desc} · ${o.w} كجم`;
+  document.getElementById('bid-input').value='';
+  document.getElementById('m-bid').classList.add('on');
+}
+function submitBid(){
+  const p=parseInt(document.getElementById('bid-input').value);
+  if(!p||p<1){toast('⚠️ أدخل مبلغ عرضك');return;}
+  const o=S.carrierOffers.find(x=>x.id===bidTarget);
+  o.bid=p;
+  document.getElementById('m-bid').classList.remove('on');
+  renderHome();
+  toast('📨 انرسل عرضك للمرسل — بنبلغك إذا قبل');
+  setTimeout(()=>{
+    if(!o.bid)return;
+    toast('🎉 قبل المرسل عرضك بـ '+p+' ﷼! امسح رمز الاستلام عنده');
+    setTimeout(()=>{
+      document.getElementById('scan-title').textContent='📷 مسح رمز الاستلام';
+      document.getElementById('scan-input').value='';
+      document.getElementById('m-scan').classList.add('on');
+    },1600);
+  },3500);
+}
+
+/* ================= tracking ================= */
+function openTrack(id){
+  activeShip=S.shipments.find(s=>s.id===id);
+  const s=activeShip;
+  const steps=[
+    ['تم إنشاء الطلب','ودفع المبلغ في المحفظة الآمنة'],
+    ['قبل الناقل الشحنة',s.carrier+' · '+s.car],
+    ['تم الاستلام','بعد مسح رمز QR من المرسل'],
+    ['في الطريق','تتبع مباشر لموقع الناقل'],
+    ['تم التسليم','وتحويل المستحقات للناقل'],
+  ];
+  document.getElementById('track-body').innerHTML=`
+    <div class="card ship">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="route">${s.from} <span class="arr">←</span> ${s.to}</div>
+        <span class="chip ${SCHIP[s.status]}">${STATUS[s.status]}</span>
+      </div>
+      <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span><span class="price" style="font-size:13px">${s.price} ﷼</span></div>
+    </div>
+    ${s.status>=2&&s.status<4?`<div class="map"><span class="pin" style="right:4%;top:74%">📍</span><span class="pin" style="right:88%;top:6%">🏁</span><span class="truck">🚗</span></div>`:''}
+    <div class="card">
+      <div class="sec-t" style="margin-top:0">مسار الشحنة</div>
+      <div class="steps">
+      ${steps.map((st,i)=>`
+        <div class="step ${i<s.status?'done':i===s.status?'cur':''}">
+          ${i<steps.length-1?'<span class="ln"></span>':''}
+          <div class="dotc"><div class="d"></div></div>
+          <div class="tx"><b>${st[0]}</b><span>${st[1]}</span></div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="display:flex;align-items:center;gap:12px">
+      <div style="width:46px;height:46px;border-radius:50%;background:var(--sky-l);display:flex;align-items:center;justify-content:center;font-size:20px">🧔</div>
+      <div style="flex:1"><b style="font-size:14px">${s.carrier}</b><div class="mut">⭐ ${s.rating} · ${s.car} · ✓ موثق</div></div>
+      <button class="bell" style="background:var(--sky-l);color:var(--sky-d)" onclick="toast('💬 المحادثة داخل التطبيق فقط لحمايتك')">💬</button>
+    </div>
+    ${s.status===1?`<button class="btn" onclick="showQR('pickup')">🔐 اعرض رمز الاستلام للناقل</button>
+      <div style="height:8px"></div><button class="btn ghost sm" onclick="advanceDemo()">⏩ (تجربة) الناقل استلم الشحنة</button>`:''}
+    ${s.status===2||s.status===3?`<button class="btn" onclick="showQR('drop')">🔐 رمز التسليم — للمستلم</button>
+      <div style="height:8px"></div><button class="btn green sm" onclick="deliverDemo()">⏩ (تجربة) وصلت — أكّد التسليم</button>`:''}
+    ${s.status===4?`<button class="btn ghost" onclick="document.getElementById('m-rate').classList.add('on')">⭐ قيّم الناقل</button>`:''}
+  `;
+  go('track');
+}
+function advanceDemo(){activeShip.status=2;toast('✅ مسح الناقل رمز QR — الشحنة "تم الاستلام"');setTimeout(()=>{activeShip.status=3;openTrack(activeShip.id);renderHome();renderList();},600);}
+function deliverDemo(){activeShip.status=4;renderHome();renderList();openTrack(activeShip.id);toast('💸 تحوّلت مستحقات الناقل بعد خصم العمولة');setTimeout(()=>document.getElementById('m-rate').classList.add('on'),1000);}
+
+/* ================= QR ================= */
+function showQR(kind){
+  document.getElementById('qr-title').textContent = kind==='pickup'?'🔐 رمز الاستلام':'🔐 رمز التسليم';
+  document.getElementById('qr-sub').textContent = kind==='pickup'
+    ?'اعرض هذا الرمز للناقل عند استلامه الشحنة منك.'
+    :'أرسل هذا الرمز للمستلم — يعرضه للناقل عند وصول الشحنة.';
+  const code=activeShip?activeShip.code:'7349';
+  document.getElementById('qr-code').textContent=code.split('').join(' ');
+  const g=document.getElementById('qr-grid');
+  let seed=0;for(const c of code)seed=seed*31+c.charCodeAt(0);
+  let html='';
+  for(let y=0;y<21;y++)for(let x=0;x<21;x++){
+    const finder=(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13);
+    let f;
+    if(finder){const lx=x%14>6?x-14:x, ly=y%14>6?y-14:y;f=(lx===0||lx===6||ly===0||ly===6||(lx>1&&lx<5&&ly>1&&ly<5));}
+    else{seed=(seed*1103515245+12345)&0x7fffffff;f=(seed>>16)%2===0;}
+    html+=`<i class="${f?'f':''}"></i>`;
+  }
+  g.innerHTML=html;
+  document.getElementById('m-qr').classList.add('on');
+}
+function confirmScan(){
+  const v=document.getElementById('scan-input').value;
+  if(v!=='7349'){toast('❌ الرمز غير صحيح — جرّب 7349');return;}
+  document.getElementById('m-scan').classList.remove('on');
+  toast('✅ تم تأكيد الاستلام — الشحنة الآن بعهدتك');
+}
+
+/* ================= rating ================= */
+function rate(n){document.querySelectorAll('#stars span').forEach((s,i)=>s.classList.toggle('on',i<n));}
+
+/* init */
+setRole('sender');
+document.querySelectorAll('.otpbox').forEach((b,i,arr)=>{
+  b.addEventListener('input',()=>{
+    b.value=b.value.replace(/\D/g,'').slice(0,1);
+    if(b.value&&i<arr.length-1)arr[i+1].focus();
+  });
+  b.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!b.value&&i>0)arr[i-1].focus();});
+});
+</script>
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script>
+</body>
+</html>
