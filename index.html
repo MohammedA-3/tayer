@@ -79,8 +79,8 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 .gate{position:absolute;inset:0;background:var(--bg);z-index:95;display:none;flex-direction:column;overflow-y:auto;scrollbar-width:none}
 .gate::-webkit-scrollbar{display:none}
 .gate.on{display:flex}
-.otprow{display:flex;gap:10px;justify-content:center;margin:16px 0 10px}
-.otpbox{width:54px;height:62px;text-align:center;font-size:26px;font-weight:800;margin-bottom:0;direction:ltr}
+#otp-in{width:240px;margin:16px auto 10px;display:block;text-align:center;font-size:32px;font-weight:800;letter-spacing:14px;direction:ltr;padding:12px 8px 12px 0}
+#otp-in::placeholder{letter-spacing:8px;font-size:24px;color:#cbd5e1}
 #sms{position:absolute;top:10px;right:12px;left:12px;background:rgba(15,23,42,.94);color:#fff;border-radius:16px;padding:11px 14px;display:flex;gap:10px;align-items:center;z-index:300;transform:translateY(-140%);transition:.5s cubic-bezier(.2,.9,.3,1.15);box-shadow:0 10px 30px rgba(0,0,0,.35)}
 #sms.show{transform:translateY(0)}
 #sms .from{display:block;font-size:11px;opacity:.65}
@@ -225,12 +225,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
     <div class="card" style="text-align:center">
       <div style="font-size:36px">🔐</div>
       <b style="font-size:14.5px">أدخل الرمز المرسل إلى <span id="otp-phone" style="direction:ltr;display:inline-block;color:var(--sky-d)"></span></b>
-      <div class="otprow">
-        <input class="otpbox" maxlength="1" inputmode="numeric">
-        <input class="otpbox" maxlength="1" inputmode="numeric">
-        <input class="otpbox" maxlength="1" inputmode="numeric">
-        <input class="otpbox" maxlength="1" inputmode="numeric">
-      </div>
+      <input id="otp-in" type="tel" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="＿ ＿ ＿ ＿">
       <div class="mut">ما وصلك الرمز؟ <a href="#" onclick="resendOtp();return false" style="color:var(--sky-d);font-weight:700">أعد الإرسال</a></div>
     </div>
     <button class="btn" onclick="verifyOtp()">تحقق وادخل</button>
@@ -593,11 +588,11 @@ function sendOtp(){
   if(!document.getElementById('lg-terms').checked){toast('⚠️ لازم توافق على الشروط أولاً');return;}
   auth.phone='+966'+p;
   document.getElementById('otp-phone').textContent=auth.phone;
-  document.querySelectorAll('.otpbox').forEach(b=>b.value='');
+  document.getElementById('otp-in').value='';
   openGate('otp');
   otpCode=String(Math.floor(1000+Math.random()*9000));
   fireSms('رمز تحقق طاير: '+otpCode+' — لا تشاركه مع أحد');
-  setTimeout(()=>document.querySelector('.otpbox').focus(),400);
+  setTimeout(()=>document.getElementById('otp-in').focus(),400);
 }
 function resendOtp(){
   otpCode=String(Math.floor(1000+Math.random()*9000));
@@ -605,7 +600,7 @@ function resendOtp(){
   toast('📩 أعدنا إرسال الرمز');
 }
 function verifyOtp(){
-  const v=[...document.querySelectorAll('.otpbox')].map(b=>b.value).join('');
+  const v=document.getElementById('otp-in').value.trim();
   if(v.length<4){toast('⚠️ أكمل الرمز المكوّن من 4 أرقام');return;}
   if(v!==otpCode){toast('❌ الرمز غير صحيح — شوف رسالة SMS فوق');return;}
   document.getElementById('sms').classList.remove('show');
@@ -951,12 +946,10 @@ function rate(n){document.querySelectorAll('#stars span').forEach((s,i)=>s.class
 
 /* init */
 setRole('sender');
-document.querySelectorAll('.otpbox').forEach((b,i,arr)=>{
-  b.addEventListener('input',()=>{
-    b.value=b.value.replace(/\D/g,'').slice(0,1);
-    if(b.value&&i<arr.length-1)arr[i+1].focus();
-  });
-  b.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!b.value&&i>0)arr[i-1].focus();});
+const otpIn=document.getElementById('otp-in');
+otpIn.addEventListener('input',()=>{
+  otpIn.value=otpIn.value.replace(/\D/g,'').slice(0,4);
+  if(otpIn.value.length===4)setTimeout(verifyOtp,300);
 });
 </script>
 <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script>
