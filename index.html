@@ -345,11 +345,24 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
         <div><label>مدينة الاستلام</label><select id="f-from"><option>الرياض</option><option>جدة</option><option>الدمام</option><option>أبها</option><option>القصيم</option><option>المدينة</option></select></div>
         <div><label>مدينة التسليم</label><select id="f-to"><option>جدة</option><option>الرياض</option><option>الدمام</option><option>أبها</option><option>القصيم</option><option>المدينة</option></select></div>
       </div>
+      <div id="tier-block" style="display:none">
+        <label>حجم الشحنة</label>
+        <select id="f-tier" onchange="recalcPrice()"></select>
+        <label>عدد الطرود / القطع</label>
+        <input id="f-qty" type="number" value="1" min="1" oninput="recalcPrice()">
+      </div>
       <label>وصف الشحنة</label>
       <input id="f-desc" placeholder="مثال: كرتون أغراض شخصية">
       <div class="row">
-        <div><label>الوزن (كجم)</label><input id="f-w" type="number" placeholder="12"></div>
+        <div><label>الوزن (كجم)</label><input id="f-w" type="number" placeholder="12" oninput="recalcPrice()"></div>
         <div><label>القيمة التقريبية (﷼)</label><input type="number" placeholder="500"></div>
+      </div>
+      <div id="price-est" style="display:none;background:var(--sky-l);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12.5px;color:#075985">💡 السعر المقترح</span>
+          <b class="price" id="price-val" style="font-size:19px">— ﷼</b>
+        </div>
+        <div class="mut" id="price-note" style="margin-top:4px;font-size:11.5px">محسوب حسب المسافة والوزن — تقدر تنشر فيه أو تعدّله وتستقبل عروض</div>
       </div>
       <div class="row">
         <div><label>موعد الاستلام</label><input type="date" value="2026-07-28"></div>
@@ -382,16 +395,17 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
         <div><label>إلى</label><select id="t-to"><option>جدة</option><option>الرياض</option><option>الدمام</option><option>أبها</option></select></div>
       </div>
       <div class="row">
-        <div><label>تاريخ المغادرة</label><input type="date" value="2026-07-28"></div>
-        <div><label>الوقت</label><input type="time" value="16:00"></div>
+        <div><label>تاريخ المغادرة</label><input id="t-date" type="date" value="2026-07-28"></div>
+        <div><label>وقت الانطلاق</label><input id="t-time" type="time" value="16:00"></div>
       </div>
       <label>نوع المركبة</label>
-      <select><option>سيدان</option><option>جيب / SUV</option><option>وانيت</option><option>باص</option><option>دينة</option></select>
+      <select id="t-veh"><option>سيدان</option><option>جيب / SUV</option><option>وانيت</option><option>باص</option><option>دينة</option></select>
       <div class="row">
-        <div><label>المساحة المتوفرة</label><select><option>شنطة السيارة</option><option>نص الحمولة</option><option>حمولة كاملة</option></select></div>
-        <div><label>أقصى وزن (كجم)</label><input type="number" value="40"></div>
+        <div><label>المساحة المتوفرة</label><select id="t-cap"><option>شنطة السيارة</option><option>نص الحمولة</option><option>حمولة كاملة</option></select></div>
+        <div><label>أقصى وزن (كجم)</label><input id="t-maxw" type="number" value="40"></div>
       </div>
     </div>
+    <div class="mut" style="text-align:center;margin-bottom:12px">بعد نشر رحلتك تشوف الشحنات على مسارك وتضيف أكثر من شحنة لنفس الرحلة</div>
     <button class="btn" onclick="createTrip()">🚗 انشر الرحلة</button>
   </div>
 </div>
@@ -571,7 +585,21 @@ const S={
 };
 const STATUS=['بانتظار العروض','تم القبول','تم الاستلام','في الطريق','تم التسليم'];
 const SCHIP=['warn','blue','blue','blue','ok'];
-let activeShip=null, scanStage=1, nextId=4830, bidTarget=null;
+let activeShip=null, scanStage=1, nextId=4830, bidTarget=null, myTrip=null;
+/* أحجام الشحن للمتجر — أساس + سعر/كجم متدرج */
+const TIERS={
+  small:{t:'طرد عادي',ic:'📦',base:15,perKg:3,maxKg:20,hint:'حتى 20 كجم'},
+  large:{t:'طرد كبير',ic:'📦',base:30,perKg:2.5,maxKg:60,hint:'20–60 كجم'},
+  pallet:{t:'بالتة / منصة نقالة',ic:'🗃️',base:120,perKg:1.5,maxKg:300,hint:'حتى 300 كجم'},
+  bulk:{t:'شحنة جملة (حمولة)',ic:'🚚',base:350,perKg:0.8,maxKg:1500,hint:'حمولة وانيت/دينة'},
+};
+/* أساس المسار حسب المسافة التقريبية */
+const ROUTEBASE={'الرياض|جدة':40,'الرياض|الدمام':25,'الرياض|أبها':55,'الرياض|القصيم':20,'الرياض|المدينة':45,'جدة|مكة':10,'جدة|الطائف':12,'جدة|المدينة':30};
+function routeBase(from,to){return ROUTEBASE[from+'|'+to]||ROUTEBASE[to+'|'+from]||35;}
+function estPrice(from,to,kg,tierKey){
+  const t=TIERS[tierKey]||TIERS.small;
+  return Math.max(t.base, Math.round(routeBase(from,to)*(tierKey==='small'?1:0.6) + kg*t.perKg));
+}
 
 /* ================= auth & gates ================= */
 function sv(k,v){try{localStorage.setItem('tayer_'+k,v)}catch(e){}}
@@ -687,6 +715,7 @@ function go(s){
   document.getElementById('sc-'+s).classList.add('on');
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('act',b.dataset.s===s));
   document.getElementById('sc-'+s).scrollTop=0;
+  if(s==='newship')prepNewShip();
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600);}
 
@@ -696,8 +725,8 @@ function renderHome(){
   if(role==='sender'||role==='store'){
     const active=S.shipments.filter(s=>s.status<4);
     h.innerHTML=`
-    ${role==='store'?`<div class="card" style="background:var(--sky-l);border:1.5px dashed var(--sky)"><b style="font-size:13.5px">🏪 حساب متجر</b><div class="mut" style="margin-top:4px">اربط متجرك عبر API وارفع طلبات عملائك دفعة واحدة — قريبًا رفع ملف Excel.</div></div>`:''}
-    <button class="btn" onclick="go('newship')" style="margin-bottom:14px">📦 أنشئ طلب شحن جديد</button>
+    ${role==='store'?`<div class="card" style="background:var(--sky-l);border:1.5px dashed var(--sky)"><b style="font-size:13.5px">🏪 حساب متجر</b><div class="mut" style="margin-top:4px">تقدر تشحن أحجامًا أكبر — طرود، بالتات، وحمولات كاملة بأسعار خاصة. وقريبًا رفع طلباتك دفعة عبر ملف Excel وربط API.</div></div>`:''}
+    <button class="btn" onclick="go('newship')" style="margin-bottom:14px">${role==='store'?'🚚 أنشئ طلب شحن تجاري':'📦 أنشئ طلب شحن جديد'}</button>
     <div class="sec-t">شحناتك النشطة</div>
     ${active.length?active.map(shipCard).join(''):'<div class="empty"><div class="ic">📭</div>ما عندك شحنات نشطة</div>'}
     <div class="sec-t">ليه طاير؟</div>
@@ -718,9 +747,28 @@ function renderHome(){
       <div style="font-size:12.5px;color:#9a3412;line-height:1.7"><b>نصيحة أمان:</b> خلّ التواصل والدفع داخل التطبيق دايم — أي ناقل يطلب تحويل خارجي بلّغ عنه فورًا.</div>
     </div>`;
   } else {
+    const used=usedWeight(), maxw=myTrip?myTrip.maxw:40, pct=Math.min(100,Math.round(used/maxw*100));
+    const routeChip = myTrip?`${myTrip.from} ← ${myTrip.to}`:'جدة ← الرياض';
     h.innerHTML=`
-    <button class="btn" onclick="go('newtrip')" style="margin-bottom:14px">🚗 أضف رحلتك الجاية</button>
-    <div class="sec-t">شحنات على خط سيرك <span class="chip blue">جدة ← الرياض</span></div>
+    ${myTrip?`
+    <div class="card" style="border:1.5px solid var(--sky)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="route" style="font-weight:800">${myTrip.from} <span class="arr">←</span> ${myTrip.to}</div>
+        <span class="chip blue">🕓 ${tripTimeLabel()}</span>
+      </div>
+      <div class="meta" style="margin-top:6px"><span>🚗 ${myTrip.veh}</span><span>📦 ${myTrip.cap}</span></div>
+      <div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span class="mut">الحمولة: ${used} / ${maxw} كجم</span><span style="font-weight:700;color:${pct>90?'var(--bad)':'var(--sky-d)'}">${myTrip.accepted.length} شحنة</span></div>
+        <div style="height:8px;background:var(--line);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${pct>90?'var(--bad)':'var(--ok)'};transition:.3s"></div></div>
+      </div>
+      ${myTrip.accepted.length?`<div class="hr"></div>${myTrip.accepted.map(s=>`<div class="txn" style="padding:8px 2px"><div>📦 ${s.desc} <span class="mut">· ${s.w} كجم</span></div><span class="price" style="font-size:13px">+${Math.round((s.bid||s.price)*0.85)} ﷼</span></div>`).join('')}
+      <div class="txn" style="padding:10px 2px;border:none"><b>صافي أرباح الرحلة</b><b class="price">${tripEarnings()} ﷼</b></div>`:'<div class="mut" style="margin-top:10px">اقبل شحنات من الأسفل لتعبئة رحلتك 👇</div>'}
+    </div>`
+    :`<button class="btn" onclick="go('newtrip')" style="margin-bottom:14px">🚗 أضف رحلتك الجاية</button>
+      <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:var(--warn-l);border:1px solid #fde68a">
+        <span style="font-size:20px">🕓</span><div style="font-size:12.5px;color:#92400e;line-height:1.7">أضف رحلتك ووقت انطلاقها أول — بعدها تشوف الشحنات على مسارك وتقدر تجمع أكثر من شحنة في نفس الرحلة.</div>
+      </div>`}
+    <div class="sec-t">شحنات على خط سيرك <span class="chip blue">${routeChip}</span></div>
     ${S.carrierOffers.map(o=>`
       <div class="card ship">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -853,12 +901,61 @@ function acceptBid(i){
   setTimeout(()=>openTrack(s.id),700);
 }
 function createTrip(){
-  toast('🚗 انتشرت رحلتك! جاري مطابقة الشحنات...');
-  setTimeout(()=>{go('home');renderHome();},900);
+  const from=document.getElementById('t-from').value, to=document.getElementById('t-to').value;
+  if(from===to){toast('⚠️ مدينة الانطلاق والوصول متطابقة');return;}
+  const d=document.getElementById('t-date').value, t=document.getElementById('t-time').value;
+  const maxw=parseInt(document.getElementById('t-maxw').value)||40;
+  myTrip={from,to,date:d,time:t,cap:document.getElementById('t-cap').value,
+    veh:document.getElementById('t-veh').value,maxw,accepted:[]};
+  toast('🚗 انتشرت رحلتك! هذي الشحنات على مسارك');
+  setTimeout(()=>{go('home');renderHome();},700);
+}
+function tripTimeLabel(){
+  if(!myTrip)return '';
+  const days=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  let dl=myTrip.date;
+  try{const dt=new Date(myTrip.date+'T00:00');dl=days[dt.getDay()]+' '+myTrip.date;}catch(e){}
+  let tl=myTrip.time;
+  try{let[h,m]=myTrip.time.split(':').map(Number);const am=h<12;const h12=(h%12)||12;tl=h12+':'+String(m).padStart(2,'0')+(am?'ص':'م');}catch(e){}
+  return dl+' · '+tl;
+}
+function usedWeight(){return myTrip?myTrip.accepted.reduce((a,s)=>a+Number(s.w||0),0):0;}
+function tripEarnings(){return myTrip?myTrip.accepted.reduce((a,s)=>a+Math.round((s.bid||s.price||0)*0.85),0):0;}
+
+/* حاسبة السعر المقترح (للمرسل والمتجر) */
+function recalcPrice(){
+  const box=document.getElementById('price-est');
+  const from=document.getElementById('f-from').value, to=document.getElementById('f-to').value;
+  const kg=Number(document.getElementById('f-w').value)||0;
+  const tierSel=document.getElementById('f-tier');
+  const tierKey=(role==='store'&&tierSel)?tierSel.value:'small';
+  const qty=role==='store'?(Number(document.getElementById('f-qty').value)||1):1;
+  if(!kg){box.style.display='none';return;}
+  const per=estPrice(from,to,kg,tierKey);
+  const total=per*qty;
+  box.style.display='block';
+  document.getElementById('price-val').textContent=total+' ﷼';
+  document.getElementById('price-note').textContent = role==='store'
+    ? `${TIERS[tierKey].t} × ${qty} — سعر تقديري ${per} ﷼ للقطعة، قابل للتفاوض عبر العروض`
+    : 'محسوب حسب المسافة والوزن — تقدر تنشر فيه أو تعدّله وتستقبل عروض';
+}
+function prepNewShip(){
+  const tb=document.getElementById('tier-block');
+  if(role==='store'){
+    tb.style.display='block';
+    const sel=document.getElementById('f-tier');
+    if(!sel.dataset.filled){
+      sel.innerHTML=Object.entries(TIERS).map(([k,v])=>`<option value="${k}">${v.ic} ${v.t} — ${v.hint}</option>`).join('');
+      sel.dataset.filled='1';
+    }
+  }else{tb.style.display='none';}
+  recalcPrice();
 }
 function openBid(id){
-  bidTarget=id;
+  if(!myTrip){toast('🕓 أضف رحلتك ووقت انطلاقها أولاً');go('newtrip');return;}
   const o=S.carrierOffers.find(x=>x.id===id);
+  if(usedWeight()+Number(o.w) > myTrip.maxw){toast('⚠️ وزن الشحنة يتجاوز المتبقي من حمولة رحلتك');return;}
+  bidTarget=id;
   document.getElementById('bid-sub').textContent=`${o.from} ← ${o.to} · ${o.desc} · ${o.w} كجم`;
   document.getElementById('bid-input').value='';
   document.getElementById('m-bid').classList.add('on');
@@ -873,13 +970,14 @@ function submitBid(){
   toast('📨 انرسل عرضك للمرسل — بنبلغك إذا قبل');
   setTimeout(()=>{
     if(!o.bid)return;
-    toast('🎉 قبل المرسل عرضك بـ '+p+' ﷼! امسح رمز الاستلام عنده');
-    setTimeout(()=>{
-      document.getElementById('scan-title').textContent='📷 مسح رمز الاستلام';
-      document.getElementById('scan-input').value='';
-      document.getElementById('m-scan').classList.add('on');
-    },1600);
-  },3500);
+    if(myTrip && !myTrip.accepted.some(x=>x.id===o.id)){
+      myTrip.accepted.push(o);
+      S.carrierOffers=S.carrierOffers.filter(x=>x.id!==o.id);
+      renderHome();
+    }
+    fireSms('طاير: قبل المرسل عرضك بـ '+p+' ﷼ للشحنة "'+o.desc+'" — أُضيفت لرحلتك');
+    toast('🎉 قبل المرسل! أُضيفت الشحنة لرحلتك — تقدر تجمع أكثر');
+  },3000);
 }
 
 /* ================= tracking ================= */
