@@ -445,6 +445,22 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
   </div>
 </div>
 
+<!-- ======== SUPPORT ======== -->
+<div class="screen" id="sc-suprt">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('me')">→</button> الدعم الفني</h1></div></div>
+  <div class="wrap">
+    <div class="card">
+      <label>وش نقدر نساعدك فيه؟</label>
+      <input id="sp-su" placeholder="عنوان المشكلة — مثال: مشكلة في الدفع">
+      <textarea id="sp-tx" rows="3" placeholder="اشرح لنا التفاصيل..."></textarea>
+      <button class="btn sm" onclick="sendTicket()">📨 أرسل التذكرة</button>
+      <div class="mut" style="text-align:center;margin-top:8px">فريق الدعم يرد عادةً خلال دقائق في أوقات العمل</div>
+    </div>
+    <div class="sec-t">تذاكري</div>
+    <div id="sp-list"></div>
+  </div>
+</div>
+
 <!-- ======== PROFILE ======== -->
 <div class="screen" id="sc-me">
   <div class="hd"><div class="hd-row"><h1>حسابي</h1></div></div>
@@ -467,7 +483,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
       <div class="txn"><div>🚗 مركباتي (كامري 2023)</div><span class="mut">›</span></div>
       <div class="txn"><div>🛡️ الأمان والبلاغات</div><span class="mut">›</span></div>
       <div class="txn"><div>📄 شروط الاستخدام وسياسة الشحنات</div><span class="mut">›</span></div>
-      <div class="txn"><div>🎧 الدعم الفني</div><span class="mut">›</span></div>
+      <div class="txn" onclick="go('suprt')" style="cursor:pointer"><div>🎧 الدعم الفني</div><span class="mut">›</span></div>
     </div>
     <button class="btn ghost sm" onclick="location.reload()">تسجيل الخروج</button>
   </div>
@@ -941,11 +957,43 @@ function confirmScan(){
   toast('✅ تم تأكيد الاستلام — الشحنة الآن بعهدتك');
 }
 
+/* ================= support tickets ================= */
+const myTickets=[{id:1021,su:'استفسار عن ربط API',st:'closed',reply:'ربط الـ API ضمن خطتنا القادمة للمتاجر، وسنتواصل معك فور إطلاقه.'}];
+function renderTickets(){
+  document.getElementById('sp-list').innerHTML=myTickets.map(t=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b style="font-size:13.5px">#${t.id} — ${t.su}</b>
+        <span class="chip ${t.st==='open'?'warn':'ok'}">${t.st==='open'?'مفتوحة':'تم الرد'}</span>
+      </div>
+      ${t.reply
+        ?`<div class="mut" style="background:var(--sky-l);border-radius:10px;padding:8px 12px;margin-top:8px;color:#075985">🎧 فريق الدعم: ${t.reply}</div>`
+        :'<div class="mut" style="margin-top:6px">وصلت تذكرتك — بيرد عليك فريق الدعم قريبًا...</div>'}
+    </div>`).join('');
+}
+function sendTicket(){
+  const su=document.getElementById('sp-su').value.trim();
+  const tx=document.getElementById('sp-tx').value.trim();
+  if(!su||!tx){toast('⚠️ اكتب العنوان والتفاصيل');return;}
+  const t={id:1024+myTickets.length,su,st:'open',reply:null};
+  myTickets.unshift(t);
+  document.getElementById('sp-su').value='';document.getElementById('sp-tx').value='';
+  renderTickets();
+  toast('📨 وصلت تذكرتك لفريق الدعم');
+  setTimeout(()=>{
+    t.st='closed';
+    t.reply='أهلًا بك 🌹 استلمنا طلبك وتمت معالجته — تأكد من التطبيق الآن، وإذا احتجت أي شيء نحن موجودون.';
+    renderTickets();
+    fireSms('دعم طاير: تم الرد على تذكرتك #'+t.id+' — افتح التطبيق لقراءة الرد');
+  },6000);
+}
+
 /* ================= rating ================= */
 function rate(n){document.querySelectorAll('#stars span').forEach((s,i)=>s.classList.toggle('on',i<n));}
 
 /* init */
 setRole('sender');
+renderTickets();
 const otpIn=document.getElementById('otp-in');
 otpIn.addEventListener('input',()=>{
   otpIn.value=otpIn.value.replace(/\D/g,'').slice(0,4);

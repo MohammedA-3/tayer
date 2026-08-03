@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>طاير — بوابة الإدارة والدعم</title>
+<style>
+:root{
+  --sky:#0ea5e9;--sky-d:#0284c7;--sky-l:#e0f2fe;
+  --ink:#0f172a;--navy:#0f2440;--mut:#64748b;--line:#e2e8f0;
+  --bg:#f1f5f9;--card:#fff;
+  --ok:#10b981;--ok-l:#d1fae5;--warn:#f59e0b;--warn-l:#fef3c7;--bad:#ef4444;--bad-l:#fee2e2;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,'Noto Kufi Arabic',sans-serif}
+body{background:var(--bg);min-height:100vh;color:var(--ink)}
+/* ===== login ===== */
+#login{position:fixed;inset:0;background:linear-gradient(160deg,#0f2440,#0284c7 70%,#38bdf8);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.logbox{background:#fff;border-radius:22px;padding:34px 30px;width:100%;max-width:400px;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.35)}
+.logbox h1{font-size:22px;margin:10px 0 4px}
+.logbox .mut{margin-bottom:20px}
+.rolepick{display:flex;gap:10px;margin-bottom:14px}
+.rolepick button{flex:1;border:2px solid var(--line);background:#fff;border-radius:14px;padding:14px 8px;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--mut);transition:.15s}
+.rolepick button.act{border-color:var(--sky);color:var(--sky-d);background:var(--sky-l)}
+.rolepick button .big{font-size:26px;display:block;margin-bottom:4px}
+input,select,textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;margin-bottom:10px;font-family:inherit}
+input:focus,textarea:focus{outline:none;border-color:var(--sky)}
+.btn{display:inline-block;border:none;background:var(--sky);color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit}
+.btn:active{transform:scale(.97)}
+.btn.w{width:100%}
+.btn.ghost{background:var(--sky-l);color:var(--sky-d)}
+.btn.green{background:var(--ok)}
+.btn.red{background:var(--bad)}
+.btn.sm{padding:8px 14px;font-size:12.5px;border-radius:10px}
+/* ===== layout ===== */
+#app{display:none;min-height:100vh}
+#app.on{display:flex}
+#side{width:250px;background:var(--navy);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;right:0}
+#side .logo{padding:22px 20px;font-size:19px;font-weight:800;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+#side nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:4px}
+#side nav button{display:flex;align-items:center;gap:10px;background:none;border:none;color:rgba(255,255,255,.75);padding:12px 14px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;text-align:right;font-family:inherit;transition:.15s}
+#side nav button:hover{background:rgba(255,255,255,.07)}
+#side nav button.act{background:var(--sky);color:#fff}
+#side nav .bdg{margin-right:auto;background:var(--bad);color:#fff;font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px}
+#side .me{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:13px;display:flex;align-items:center;gap:10px}
+#side .me .av{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:17px}
+#side .me a{color:#7dd3fc;font-size:11.5px;text-decoration:none;cursor:pointer}
+#main{flex:1;margin-right:250px;padding:26px 30px}
+.pg{display:none}
+.pg.on{display:block}
+.pg h2{font-size:20px;margin-bottom:4px}
+.pg .sub{color:var(--mut);font-size:13px;margin-bottom:20px}
+/* ===== components ===== */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:22px}
+.stat{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.stat .n{font-size:26px;font-weight:800;color:var(--sky-d)}
+.stat .l{font-size:12.5px;color:var(--mut);margin-top:2px}
+.stat.hot .n{color:var(--bad)}
+.panel{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(15,23,42,.06);margin-bottom:18px}
+.panel h3{font-size:15px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:right;color:var(--mut);font-size:11.5px;font-weight:700;padding:8px 10px;border-bottom:1.5px solid var(--line)}
+td{padding:11px 10px;border-bottom:1px solid var(--line)}
+tr:last-child td{border:none}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700}
+.chip.ok{background:var(--ok-l);color:#047857}
+.chip.warn{background:var(--warn-l);color:#b45309}
+.chip.bad{background:var(--bad-l);color:#b91c1c}
+.chip.blue{background:var(--sky-l);color:var(--sky-d)}
+/* carrier cards */
+.carr{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.carr .info{flex:1;min-width:220px}
+.carr .info b{font-size:15px}
+.carr .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px;margin-top:8px}
+.carr .kv span{color:var(--mut)}
+.docs{display:flex;gap:10px}
+.doc{width:92px;text-align:center;cursor:pointer}
+.doc .th{height:64px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;border:1.5px solid var(--line);background:linear-gradient(135deg,#e0f2fe,#bae6fd)}
+.doc div:last-child{font-size:10.5px;color:var(--mut);margin-top:4px}
+.acts{display:flex;flex-direction:column;gap:8px;min-width:130px}
+/* ===== support ===== */
+#support .wrap2{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
+.tlist{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(15,23,42,.06);overflow:hidden}
+.tk{padding:14px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:.12s}
+.tk:hover{background:var(--bg)}
+.tk.act{background:var(--sky-l)}
+.tk b{font-size:13.5px;display:block}
+.tk .mut2{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;justify-content:space-between}
+.thread{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(15,23,42,.06);display:flex;flex-direction:column;min-height:480px}
+.thread .head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.msgs{flex:1;padding:20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:430px}
+.msg{max-width:75%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.7}
+.msg.user{background:var(--bg);border-radius:14px 14px 14px 4px;align-self:flex-start}
+.msg.staff{background:var(--sky);color:#fff;border-radius:14px 14px 4px 14px;align-self:flex-end}
+.msg .t{display:block;font-size:10.5px;opacity:.65;margin-top:5px}
+.reply{padding:14px 16px;border-top:1px solid var(--line)}
+.reply .row{display:flex;gap:10px}
+.reply textarea{flex:1;margin:0;resize:none;height:74px}
+.reply .col{display:flex;flex-direction:column;gap:8px;width:150px}
+#toast{position:fixed;bottom:26px;right:50%;transform:translateX(50%);background:var(--ink);color:#fff;padding:12px 24px;border-radius:99px;font-size:13.5px;z-index:200;opacity:0;transition:.3s;pointer-events:none}
+#toast.show{opacity:1}
+.empty2{text-align:center;color:var(--mut);padding:60px 20px;font-size:13.5px}
+@media(max-width:900px){
+  #side{width:70px}
+  #side .logo span.tx,#side nav button span.tx,#side .me div,#side nav .bdg{display:none}
+  #main{margin-right:70px;padding:18px}
+  #support .wrap2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login">
+  <div class="logbox">
+    <div style="font-size:44px">🕊️</div>
+    <h1>بوابة طاير</h1>
+    <div class="mut" style="color:var(--mut);font-size:13px">الإدارة والدعم الفني — دخول الموظفين فقط</div>
+    <div class="rolepick">
+      <button id="rp-admin" class="act" onclick="pickR('admin')"><span class="big">👨‍💼</span>مدير عام</button>
+      <button id="rp-support" onclick="pickR('support')"><span class="big">🎧</span>موظف دعم</button>
+    </div>
+    <input id="lg-user" placeholder="اسم المستخدم" value="admin">
+    <input id="lg-pass" type="password" placeholder="كلمة المرور (تجريبي: أي شيء)">
+    <button class="btn w" onclick="doLogin()">دخول</button>
+    <div style="font-size:11px;color:var(--mut);margin-top:12px">🔒 نسخة تجريبية — البيانات وهمية للعرض</div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <div id="side">
+    <div class="logo">🕊️ <span class="tx">طاير <span style="font-weight:400;font-size:12px;opacity:.6">| الإدارة</span></span></div>
+    <nav id="nav"></nav>
+    <div class="me">
+      <div class="av" id="me-av">👨‍💼</div>
+      <div><b id="me-name">المدير العام</b><br><a onclick="location.reload()">تسجيل الخروج</a></div>
+    </div>
+  </div>
+  <div id="main">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="pg" id="pg-dash">
+      <h2>لوحة المعلومات</h2>
+      <div class="sub">نظرة سريعة على المنصة اليوم — الأحد ٢ أغسطس ٢٠٢٦</div>
+      <div class="cards">
+        <div class="stat"><div class="n">18</div><div class="l">شحنة اليوم</div></div>
+        <div class="stat"><div class="n">342</div><div class="l">مستخدم مسجل</div></div>
+        <div class="stat hot"><div class="n">3</div><div class="l">ناقل بانتظار الموافقة</div></div>
+        <div class="stat hot"><div class="n">2</div><div class="l">تذكرة دعم مفتوحة</div></div>
+        <div class="stat"><div class="n">4,320 ﷼</div><div class="l">عمولات هذا الشهر</div></div>
+      </div>
+      <div class="panel">
+        <h3>آخر الشحنات</h3>
+        <table>
+          <tr><th>#</th><th>المسار</th><th>المرسل</th><th>الناقل</th><th>المبلغ</th><th>الحالة</th></tr>
+          <tr><td>4831</td><td>الرياض ← جدة</td><td>محمد ع.</td><td>عبدالله س.</td><td>80 ﷼</td><td><span class="chip blue">في الطريق</span></td></tr>
+          <tr><td>4830</td><td>الرياض ← أبها</td><td>سارة ق.</td><td>ماجد ع.</td><td>95 ﷼</td><td><span class="chip warn">بانتظار الاستلام</span></td></tr>
+          <tr><td>4829</td><td>جدة ← مكة</td><td>متجر روائع</td><td>فهد د.</td><td>25 ﷼</td><td><span class="chip ok">تم التسليم</span></td></tr>
+          <tr><td>4828</td><td>الدمام ← الرياض</td><td>خالد م.</td><td>نايف م.</td><td>55 ﷼</td><td><span class="chip ok">تم التسليم</span></td></tr>
+        </table>
+      </div>
+      <div class="panel">
+        <h3>أعلى المسارات هذا الأسبوع</h3>
+        <table>
+          <tr><th>المسار</th><th>الشحنات</th><th>متوسط السعر</th></tr>
+          <tr><td>الرياض ← جدة</td><td>57</td><td>75 ﷼</td></tr>
+          <tr><td>جدة ← الرياض</td><td>44</td><td>70 ﷼</td></tr>
+          <tr><td>الدمام ← الرياض</td><td>29</td><td>55 ﷼</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== CARRIERS ===== -->
+    <div class="pg" id="pg-carr">
+      <h2>طلبات الناقلين</h2>
+      <div class="sub">راجع المستندات ووافق أو ارفض — الناقل يستلم SMS بالنتيجة</div>
+      <div class="panel" id="carr-list"></div>
+      <div class="panel">
+        <h3>ناقلون معتمدون مؤخرًا</h3>
+        <table id="carr-approved">
+          <tr><th>الاسم</th><th>المركبة</th><th>اللوحة</th><th>تاريخ الاعتماد</th><th>الحالة</th></tr>
+          <tr><td>عبدالله السبيعي</td><td>كامري 2023</td><td>أ ب ج 4821</td><td>قبل 3 أيام</td><td><span class="chip ok">نشط</span></td></tr>
+          <tr><td>نايف المطيري</td><td>هايلوكس 2022</td><td>د هـ و 7742</td><td>قبل أسبوع</td><td><span class="chip ok">نشط</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== SHIPMENTS ===== -->
+    <div class="pg" id="pg-ship">
+      <h2>الشحنات</h2>
+      <div class="sub">جميع الشحنات على المنصة</div>
+      <div class="panel">
+        <table>
+          <tr><th>#</th><th>المسار</th><th>الوصف</th><th>المبلغ</th><th>الحالة</th><th></th></tr>
+          <tr><td>4831</td><td>الرياض ← جدة</td><td>كرتون أغراض شخصية</td><td>80 ﷼</td><td><span class="chip blue">في الطريق</span></td><td><button class="btn sm ghost" onclick="toast('📍 خريطة التتبع المباشر')">تتبع</button></td></tr>
+          <tr><td>4830</td><td>الرياض ← أبها</td><td>دراجة أطفال</td><td>95 ﷼</td><td><span class="chip warn">بانتظار الاستلام</span></td><td><button class="btn sm ghost" onclick="toast('📍 خريطة التتبع المباشر')">تتبع</button></td></tr>
+          <tr><td>4829</td><td>جدة ← مكة</td><td>عطور (متجر)</td><td>25 ﷼</td><td><span class="chip ok">تم التسليم</span></td><td></td></tr>
+          <tr><td>4825</td><td>الرياض ← أبها</td><td>دراجة أطفال</td><td>—</td><td><span class="chip warn">بانتظار العروض</span></td><td></td></tr>
+          <tr><td>4818</td><td>الرياض ← الدمام</td><td>شاشة 32 بوصة</td><td>65 ﷼</td><td><span class="chip ok">تم التسليم</span></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PAYMENTS ===== -->
+    <div class="pg" id="pg-pay">
+      <h2>المدفوعات</h2>
+      <div class="sub">الأرصدة المحجوزة والتحويلات والعمولات</div>
+      <div class="cards">
+        <div class="stat"><div class="n">1,240 ﷼</div><div class="l">محجوز (بانتظار تسليم)</div></div>
+        <div class="stat"><div class="n">18,750 ﷼</div><div class="l">حُوّل للناقلين</div></div>
+        <div class="stat"><div class="n">4,320 ﷼</div><div class="l">عمولات المنصة (15%)</div></div>
+      </div>
+      <div class="panel">
+        <h3>آخر العمليات</h3>
+        <table>
+          <tr><th>العملية</th><th>الشحنة</th><th>المبلغ</th><th>الحالة</th></tr>
+          <tr><td>حجز مبلغ</td><td>#4831</td><td>80 ﷼</td><td><span class="chip warn">محجوز</span></td></tr>
+          <tr><td>تحويل مستحقات — فهد د.</td><td>#4829</td><td>21.25 ﷼</td><td><span class="chip ok">تم</span></td></tr>
+          <tr><td>عمولة منصة</td><td>#4829</td><td>3.75 ﷼</td><td><span class="chip ok">تم</span></td></tr>
+          <tr><td>تحويل مستحقات — نايف م.</td><td>#4828</td><td>46.75 ﷼</td><td><span class="chip ok">تم</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== SUPPORT ===== -->
+    <div class="pg" id="pg-support">
+      <div id="support">
+      <h2>الدعم الفني</h2>
+      <div class="sub">تذاكر العملاء — الرد يصل للعميل داخل التطبيق وإشعار SMS</div>
+      <div class="wrap2">
+        <div class="tlist" id="tlist"></div>
+        <div class="thread" id="thread"><div class="empty2">👈 اختر تذكرة من القائمة لعرض المحادثة</div></div>
+      </div>
+      </div>
+    </div>
+
+    <!-- ===== REPORTS ===== -->
+    <div class="pg" id="pg-rep">
+      <h2>البلاغات والنزاعات</h2>
+      <div class="sub">بلاغات إساءة الاستخدام والنزاعات بين الأطراف</div>
+      <div class="panel">
+        <table>
+          <tr><th>#</th><th>النوع</th><th>الأطراف</th><th>الوصف</th><th>الحالة</th><th></th></tr>
+          <tr><td>R-102</td><td>نزاع تسليم</td><td>خالد م. ↔ سعد ق.</td><td>المستلم يقول الشحنة وصلت متأخرة يومًا</td><td><span class="chip warn">قيد المراجعة</span></td><td><button class="btn sm ghost" onclick="toast('📂 فتح ملف النزاع الكامل')">التفاصيل</button></td></tr>
+          <tr><td>R-101</td><td>بلاغ محتوى</td><td>ناقل → مرسل</td><td>وصف الشحنة غير مطابق للصور</td><td><span class="chip ok">مغلق — تحذير للمرسل</span></td><td></td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ===== state ===== */
+let R='admin';
+const NAV=[
+  {id:'dash',ic:'📊',t:'لوحة المعلومات',roles:['admin']},
+  {id:'carr',ic:'🪪',t:'طلبات الناقلين',roles:['admin'],badge:()=>PEND.filter(c=>c.st==='pending').length||''},
+  {id:'ship',ic:'📦',t:'الشحنات',roles:['admin']},
+  {id:'pay',ic:'💰',t:'المدفوعات',roles:['admin']},
+  {id:'support',ic:'🎧',t:'الدعم الفني',roles:['admin','support'],badge:()=>TK.filter(t=>t.st==='open').length||''},
+  {id:'rep',ic:'🚩',t:'البلاغات',roles:['admin']},
+];
+const PEND=[
+  {id:1,n:'تركي فهد الشهراني',nid:'10XXXXXX21',ph:'+966 55 XXX 1194',car:'تاهو 2021',pl:'ن ص ع 8843',city:'الرياض',st:'pending'},
+  {id:2,n:'ماجد سعيد عسيري',nid:'10XXXXXX87',ph:'+966 50 XXX 7351',car:'هايلوكس 2023',pl:'ق ر س 2210',city:'أبها',st:'pending'},
+  {id:3,n:'بندر عايض القحطاني',nid:'11XXXXXX40',ph:'+966 56 XXX 0925',car:'سوناتا 2022',pl:'م ك ل 6617',city:'جدة',st:'pending'},
+];
+const TK=[
+  {id:1023,u:'محمد العتيبي',ph:'+966 51 XXX 5678',su:'ما وصلني رمز التحقق',st:'open',time:'قبل 25 دقيقة',
+   msgs:[{who:'user',tx:'السلام عليكم، سجلت رقمي وما وصلتني رسالة رمز التحقق، جربت مرتين',t:'10:22 ص'}]},
+  {id:1022,u:'سارة القحطاني',ph:'+966 54 XXX 3310',su:'أبغى أعدل موعد الاستلام',st:'open',time:'قبل ساعتين',
+   msgs:[{who:'user',tx:'حجزت شحنة رقم 4830 وأبغى أقدم موعد الاستلام ليوم بكرة الصباح بدل العصر، ممكن؟',t:'8:45 ص'}]},
+  {id:1021,u:'متجر روائع',ph:'+966 53 XXX 9902',su:'استفسار عن ربط API',st:'closed',time:'أمس',
+   msgs:[{who:'user',tx:'هل يوجد ربط API للمتاجر لرفع الطلبات تلقائيًا؟',t:'أمس 3:12 م'},
+         {who:'staff',tx:'أهلًا بكم 🌹 ربط الـ API ضمن خطتنا القادمة للمتاجر، وسنتواصل معكم فور إطلاقه. حاليًا يمكنكم إنشاء الطلبات من حساب المتجر مباشرة.',t:'أمس 3:40 م'}]},
+];
+const CANNED=['— اختر ردًا جاهزًا —','أهلًا بك 🌹 تم استلام طلبك وجاري المعالجة، نعود لك خلال دقائق.','نعتذر عن التأخير، تم تصعيد المشكلة للفريق التقني وسنوافيك بالحل قريبًا.','تم تعديل طلبك بنجاح، تقدر تتأكد من التطبيق الآن.','شكرًا لتواصلك معنا، هل تحتاج مساعدة إضافية؟'];
+let curTk=null;
+
+/* ===== login ===== */
+function pickR(r){R=r;document.getElementById('rp-admin').classList.toggle('act',r==='admin');document.getElementById('rp-support').classList.toggle('act',r==='support');document.getElementById('lg-user').value=r==='admin'?'admin':'support';}
+function doLogin(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').classList.add('on');
+  document.getElementById('me-name').textContent=R==='admin'?'المدير العام':'موظف الدعم';
+  document.getElementById('me-av').textContent=R==='admin'?'👨‍💼':'🎧';
+  renderNav();renderCarr();renderTk();
+  go(R==='admin'?'dash':'support');
+}
+function renderNav(){
+  document.getElementById('nav').innerHTML=NAV.filter(n=>n.roles.includes(R)).map(n=>
+    `<button id="nv-${n.id}" onclick="go('${n.id}')">${n.ic} <span class="tx">${n.t}</span>${n.badge&&n.badge()?`<span class="bdg">${n.badge()}</span>`:''}</button>`).join('');
+}
+function go(p){
+  document.querySelectorAll('.pg').forEach(e=>e.classList.remove('on'));
+  document.getElementById('pg-'+p).classList.add('on');
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('act',b.id==='nv-'+p));
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* ===== carriers ===== */
+function renderCarr(){
+  const list=PEND.filter(c=>c.st==='pending');
+  document.getElementById('carr-list').innerHTML='<h3>بانتظار الموافقة ('+list.length+')</h3>'+
+  (list.length?list.map(c=>`
+    <div class="carr">
+      <div class="info">
+        <b>${c.n}</b> <span class="chip warn">جديد</span>
+        <div class="kv">
+          <span>الهوية:</span><div>${c.nid}</div>
+          <span>الجوال:</span><div style="direction:ltr;text-align:right">${c.ph}</div>
+          <span>المركبة:</span><div>${c.car}</div>
+          <span>اللوحة:</span><div>${c.pl}</div>
+          <span>المدينة:</span><div>${c.city}</div>
+        </div>
+      </div>
+      <div class="docs">
+        <div class="doc" onclick="toast('🔍 عرض صورة المركبة بالحجم الكامل')"><div class="th">🚗</div><div>صورة المركبة</div></div>
+        <div class="doc" onclick="toast('🔍 عرض الاستمارة بالحجم الكامل')"><div class="th">📋</div><div>الاستمارة</div></div>
+        <div class="doc" onclick="toast('🔍 عرض رخصة السير بالحجم الكامل')"><div class="th">🪪</div><div>رخصة السير</div></div>
+      </div>
+      <div class="acts">
+        <button class="btn green sm" onclick="decide(${c.id},true)">✓ موافقة وتفعيل</button>
+        <button class="btn red sm" onclick="decide(${c.id},false)">✗ رفض</button>
+        <button class="btn ghost sm" onclick="toast('📩 طلبنا من الناقل إعادة رفع المستند')">طلب مستند أوضح</button>
+      </div>
+    </div>`).join(''):'<div class="empty2">🎉 ما فيه طلبات معلقة</div>');
+  renderNav();
+}
+function decide(id,ok){
+  const c=PEND.find(x=>x.id===id);
+  if(!ok){const r=prompt('سبب الرفض (يُرسل للناقل):','مستند غير واضح');if(r===null)return;c.st='rejected';toast('✗ رُفض الطلب وأُبلغ الناقل بالسبب');}
+  else{c.st='approved';toast('✓ تم تفعيل '+c.n.split(' ')[0]+' — أُرسلت له رسالة SMS');
+    const tb=document.getElementById('carr-approved');
+    const tr=tb.insertRow(1);tr.innerHTML=`<td>${c.n}</td><td>${c.car}</td><td>${c.pl}</td><td>الآن</td><td><span class="chip ok">نشط</span></td>`;}
+  renderCarr();
+}
+
+/* ===== support ===== */
+function renderTk(){
+  document.getElementById('tlist').innerHTML=TK.map(t=>`
+    <div class="tk ${curTk===t.id?'act':''}" onclick="openTk(${t.id})">
+      <b>#${t.id} — ${t.su}</b>
+      <div class="mut2"><span>👤 ${t.u}</span><span>${t.time}</span></div>
+      <div style="margin-top:6px"><span class="chip ${t.st==='open'?'bad':'ok'}">${t.st==='open'?'مفتوحة':'مغلقة'}</span></div>
+    </div>`).join('');
+  renderNav();
+}
+function openTk(id){
+  curTk=id;renderTk();
+  const t=TK.find(x=>x.id===id);
+  document.getElementById('thread').innerHTML=`
+    <div class="head">
+      <div><b style="font-size:15px">#${t.id} — ${t.su}</b><div style="font-size:12px;color:var(--mut);margin-top:3px">👤 ${t.u} · <span style="direction:ltr;display:inline-block">${t.ph}</span></div></div>
+      <div style="display:flex;gap:8px">
+        <span class="chip ${t.st==='open'?'bad':'ok'}" style="align-self:center">${t.st==='open'?'مفتوحة':'مغلقة'}</span>
+        ${t.st==='open'?`<button class="btn sm ghost" onclick="closeTk(${t.id})">إغلاق التذكرة</button>`:''}
+      </div>
+    </div>
+    <div class="msgs" id="msgs">${t.msgs.map(m=>`<div class="msg ${m.who}">${m.tx}<span class="t">${m.who==='staff'?'فريق الدعم':t.u} · ${m.t}</span></div>`).join('')}</div>
+    ${t.st==='open'?`
+    <div class="reply">
+      <div class="row">
+        <textarea id="rp-tx" placeholder="اكتب ردك للعميل هنا..."></textarea>
+        <div class="col">
+          <select id="rp-canned" onchange="if(this.selectedIndex>0){document.getElementById('rp-tx').value=this.value;this.selectedIndex=0}" style="margin:0;font-size:12px">${CANNED.map(c=>`<option>${c}</option>`).join('')}</select>
+          <button class="btn sm w" onclick="sendReply(${t.id})">📨 إرسال الرد</button>
+        </div>
+      </div>
+    </div>`:''}`;
+}
+function sendReply(id){
+  const tx=document.getElementById('rp-tx').value.trim();
+  if(!tx){toast('⚠️ اكتب الرد أولاً');return;}
+  const t=TK.find(x=>x.id===id);
+  t.msgs.push({who:'staff',tx,t:'الآن'});
+  toast('📨 وصل الرد للعميل داخل التطبيق + إشعار');
+  openTk(id);
+  document.getElementById('msgs').scrollTop=99999;
+}
+function closeTk(id){
+  const t=TK.find(x=>x.id===id);t.st='closed';
+  toast('✅ أُغلقت التذكرة وأُرسل تقييم الخدمة للعميل');
+  openTk(id);renderTk();
+}
+</script>
+</body>
+</html>
