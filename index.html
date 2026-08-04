@@ -335,7 +335,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
         <circle cx="72.6" cy="29.6" r="2" fill="#0f172a"/>
         <path d="M40 34 C34 16 50 4 66 7 C56 12 51 22 49 33 C46 35.2 42 35.2 40 34 Z" fill="#a5dcf9"/>
       </svg> طاير</h1><div class="sub" id="hd-sub">أهلًا محمد 👋</div></div>
-      <button class="bell" onclick="go('notif')">🔔<span class="dot"></span></button>
+      <button class="bell" onclick="openNotifs()">🔔<span class="dot" id="bell-badge" style="display:none;width:auto;min-width:16px;height:16px;top:5px;left:6px;border-radius:8px;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;padding:0 3px">0</span></button>
     </div>
     <div class="roleswitch">
       <button id="rs-sender" onclick="setRole('sender')">📦 مرسل</button>
@@ -512,13 +512,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 <div class="screen" id="sc-notif">
   <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('home')">→</button> الإشعارات</h1></div></div>
   <div class="wrap">
-    <div class="card">
-      <div class="notif"><span class="ic">✅</span><div><b>تم تسليم شحنتك بنجاح</b><span>شحنة #4818 — استلمها خالد في جدة · قبل ساعتين</span></div></div>
-      <div class="notif"><span class="ic">🚗</span><div><b>الناقل في الطريق</b><span>عبدالله انطلق من الرياض · قبل 4 ساعات</span></div></div>
-      <div class="notif"><span class="ic">🤝</span><div><b>قبل ناقل شحنتك!</b><span>عبدالله السبيعي — رحلة الرياض ← جدة · أمس</span></div></div>
-      <div class="notif"><span class="ic">⭐</span><div><b>تقييم جديد</b><span>قيّمك سعد ⭐⭐⭐⭐⭐ «تعامل راقي» · قبل يومين</span></div></div>
-      <div class="notif"><span class="ic">💰</span><div><b>تم إيداع مستحقاتك</b><span>+68 ﷼ في محفظتك بعد اكتمال التسليم · قبل يومين</span></div></div>
-    </div>
+    <div class="card" id="notif-list"></div>
   </div>
 </div>
 
@@ -704,6 +698,8 @@ const docs={car:false,form:false,lic:false};
 function enter(r){
   document.getElementById('splash').style.display='none';
   setRole(r);
+  askNotifPerm();
+  badge();
 }
 /* افتح الدخول فقط عند الحاجة، ونفّذ العملية بعد نجاحه */
 function requireLogin(action){
@@ -794,9 +790,9 @@ function submitCarrier(){
 }
 function approveDemo(){
   auth.carrierStatus='approved';sv('carrier','approved');
-  fireSms('حيّاك في طاير 🎉 تم تفعيل حسابك كناقل — أضف رحلتك الأولى وابدأ تربح');
   openGate(null);
   setRole('carrier');
+  pushNotif('🎉','تم تفعيل حسابك كناقل!','أضف رحلتك الأولى وابدأ تربح');
   toast('🎉 تم تفعيل حسابك كناقل!');
 }
 
@@ -818,6 +814,41 @@ function go(s){
   if(s==='storereq')prepStoreReq();
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600);}
+
+/* ================= notifications ================= */
+let notifs=[
+  {ic:'⭐',title:'تقييم جديد',sub:'قيّمك سعد ⭐⭐⭐⭐⭐ «تعامل راقي»',time:'قبل يومين',read:true},
+  {ic:'💰',title:'تم إيداع مستحقاتك',sub:'+68 ﷼ في محفظتك بعد اكتمال التسليم',time:'قبل يومين',read:true},
+];
+function badge(){
+  const n=notifs.filter(x=>!x.read).length, el=document.getElementById('bell-badge');
+  if(!el)return;
+  if(n){el.textContent=n>9?'9+':n;el.style.display='flex';}else{el.style.display='none';}
+}
+function pushNotif(ic,title,sub){
+  notifs.unshift({ic,title,sub,time:'الآن',read:false});
+  badge();
+  fireSms(title+(sub?' — '+sub:''));
+  // إشعار نظام محلي (إذا أذن المستخدم)
+  try{if(window.Notification&&Notification.permission==='granted')new Notification('طاير · '+title,{body:sub||'',tag:'tayer'});}catch(e){}
+}
+function openNotifs(){
+  renderNotifs();
+  go('notif');
+  setTimeout(()=>{notifs.forEach(n=>n.read=true);badge();},400);
+}
+function renderNotifs(){
+  const el=document.getElementById('notif-list');
+  if(!notifs.length){el.innerHTML='<div class="empty"><div class="ic">🔔</div>ما عندك إشعارات</div>';return;}
+  el.innerHTML=notifs.map(n=>`
+    <div class="notif" style="${n.read?'':'background:var(--sky-l);border-radius:10px'}">
+      <span class="ic">${n.ic}</span>
+      <div style="flex:1"><b>${n.title} ${n.read?'':'<span style="display:inline-block;width:8px;height:8px;background:var(--sky);border-radius:50%;vertical-align:middle"></span>'}</b><span>${n.sub} · ${n.time}</span></div>
+    </div>`).join('');
+}
+function askNotifPerm(){
+  try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission();}catch(e){}
+}
 
 /* ================= home ================= */
 function renderHome(){
@@ -939,7 +970,7 @@ function createShipment(){
   setTimeout(()=>{
     if(s.status!==0)return;
     Object.assign(s,{carrier:'عبدالله السبيعي',car:'كامري 2023',rating:4.8,status:1});
-    fireSms('طاير: قبل ناقل شحنتك #'+s.id+' 🎉 عبدالله السبيعي في طريقه لاستلامها');
+    pushNotif('🤝','قبِل ناقل شحنتك! #'+s.id,'عبدالله السبيعي في طريقه لاستلامها');
     renderHome();renderList();
     if(activeShip===s)openTrack(s.id);
     toast('🎉 قبل ناقل شحنتك! اعرض له رمز الاستلام');
@@ -1092,7 +1123,7 @@ function chooseStoreCarrier(n,car,r,price){
   const s={id:nextId++,from:storeReq.from,to:storeReq.to,desc:TIERS[storeReq.tier].t+' ×'+storeReq.qty,
     w:storeReq.w,size:'l',price,status:1,carrier:n,car,rating:r,code:'7349'};
   S.shipments.unshift(s);
-  fireSms('طاير: اعتمدت '+n+' لرحلتك الخاصة — تم حجز '+price+' ﷼ حتى التسليم');
+  pushNotif('🤝','اعتمدت ناقلًا لرحلتك الخاصة',n+' — تم حجز '+price+' ﷼ حتى التسليم');
   toast('✓ اعتمدت الناقل — تم حجز المبلغ');
   renderHome();renderList();
   openTrack(s.id);
@@ -1135,13 +1166,46 @@ function acceptDispatch(id){
   myTrip.accepted.push(o);
   S.carrierOffers=S.carrierOffers.filter(x=>x.id!==id);
   renderHome();
-  fireSms('طاير: قبلت شحنة "'+o.desc+'" ('+o.price+' ﷼) — أُضيفت لرحلتك، توجه لنقطة الاستلام');
+  pushNotif('📦','قبلت شحنة جديدة','"'+o.desc+'" ('+o.price+' ﷼) — أُضيفت لرحلتك، توجه لنقطة الاستلام');
   toast('✓ قبلت الشحنة — أُضيفت لرحلتك');
 }
 function rejectDispatch(id){
   S.carrierOffers=S.carrierOffers.filter(x=>x.id!==id);
   renderHome();
   toast('تم تخطي الشحنة — بتوصل لناقل ثاني');
+}
+
+/* ================= live map (KSA) ================= */
+const CITYXY={'الرياض':[369,255],'جدة':[151,368],'مكة':[170,371],'المدينة':[163,264],'الدمام':[468,195],'القصيم':[290,198],'أبها':[247,482],'الطائف':[187,376]};
+const KSA_PATH='M26,94 L87,98 L145,35 L364,101 L419,123 L465,186 L489,259 L512,280 L617,329 L524,424 L378,508 L271,543 L250,532 L204,438 L145,368 L99,280 L58,193 L29,123 Z';
+function renderKsaMap(s){
+  const a=CITYXY[s.from], b=CITYXY[s.to];
+  if(!a||!b)return '';
+  const prog = s.status>=4?1 : s.status===3?0.62 : s.status===2?0.18 : s.status===1?0.05 : 0;
+  const mx=a[0]+(b[0]-a[0])*prog, my=a[1]+(b[1]-a[1])*prog;
+  const inf=driveInfo(s.from,s.to,null);
+  const dots=Object.entries(CITYXY).map(([n,p])=>{
+    const on=(n===s.from||n===s.to);
+    return `<circle cx="${p[0]}" cy="${p[1]}" r="${on?0:3}" fill="#94a3b8"/>${on?'':`<text x="${p[0]}" y="${p[1]-6}" font-size="12" fill="#64748b" text-anchor="middle">${n}</text>`}`;
+  }).join('');
+  const pctText = s.status>=4?'وصلت':s.status>=2?Math.round(prog*100)+'٪ من الطريق':'بانتظار الاستلام';
+  return `
+  <div class="card" style="padding:0;overflow:hidden">
+    <svg viewBox="0 0 640 560" style="width:100%;display:block;background:linear-gradient(160deg,#eff6ff,#e0f2fe)">
+      <path d="${KSA_PATH}" fill="#f8fafc" stroke="#bae6fd" stroke-width="2"/>
+      ${dots}
+      <line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>
+      <line x1="${a[0]}" y1="${a[1]}" x2="${mx}" y2="${my}" stroke="#0ea5e9" stroke-width="5" stroke-linecap="round"/>
+      <g><circle cx="${a[0]}" cy="${a[1]}" r="9" fill="#0284c7"/><circle cx="${a[0]}" cy="${a[1]}" r="4" fill="#fff"/><text x="${a[0]}" y="${a[1]+26}" font-size="15" font-weight="bold" fill="#0f2440" text-anchor="middle">${s.from}</text></g>
+      <g><path d="M${b[0]} ${b[1]-14} l14 5 l-14 5 Z" fill="#ef4444"/><line x1="${b[0]}" y1="${b[1]-14}" x2="${b[0]}" y2="${b[1]}" stroke="#0f2440" stroke-width="2"/><text x="${b[0]}" y="${b[1]+22}" font-size="15" font-weight="bold" fill="#0f2440" text-anchor="middle">${s.to}</text></g>
+      ${prog>0?`<g><circle cx="${mx}" cy="${my}" r="18" fill="#0ea5e9" opacity=".2"><animate attributeName="r" values="14;22;14" dur="1.6s" repeatCount="indefinite"/></circle><circle cx="${mx}" cy="${my}" r="13" fill="#fff" stroke="#0ea5e9" stroke-width="2"/><text x="${mx}" y="${my+5}" font-size="15" text-anchor="middle">🚚</text></g>`:''}
+    </svg>
+    <div style="display:flex;justify-content:space-around;text-align:center;padding:12px;border-top:1px solid var(--line)">
+      <div><div class="mut" style="font-size:11px">المسافة</div><b style="color:var(--sky-d)">${inf?inf.km+' كم':'—'}</b></div>
+      <div><div class="mut" style="font-size:11px">مدة الرحلة</div><b style="color:var(--sky-d)">${inf?inf.dur:'—'}</b></div>
+      <div><div class="mut" style="font-size:11px">التقدّم</div><b style="color:var(--ok)">${pctText}</b></div>
+    </div>
+  </div>`;
 }
 
 /* ================= tracking ================= */
@@ -1163,7 +1227,7 @@ function openTrack(id){
       </div>
       <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span><span class="price" style="font-size:13px">${s.price} ﷼</span></div>
     </div>
-    ${s.status>=2&&s.status<4?`<div class="map"><span class="pin" style="right:4%;top:74%">📍</span><span class="pin" style="right:88%;top:6%">🏁</span><span class="truck">🚗</span></div>`:''}
+    ${s.status>=1?renderKsaMap(s):''}
     <div class="card">
       <div class="sec-t" style="margin-top:0">مسار الشحنة</div>
       <div class="steps">
@@ -1188,8 +1252,22 @@ function openTrack(id){
   `;
   go('track');
 }
-function advanceDemo(){activeShip.status=2;toast('✅ مسح الناقل رمز QR — الشحنة "تم الاستلام"');setTimeout(()=>{activeShip.status=3;openTrack(activeShip.id);renderHome();renderList();},600);}
-function deliverDemo(){activeShip.status=4;renderHome();renderList();openTrack(activeShip.id);toast('💸 تحوّلت مستحقات الناقل بعد خصم العمولة');setTimeout(()=>document.getElementById('m-rate').classList.add('on'),1000);}
+function advanceDemo(){
+  activeShip.status=2;
+  pushNotif('📦','تم استلام شحنتك #'+activeShip.id,'الناقل استلمها وبدأت الرحلة');
+  toast('✅ مسح الناقل رمز QR — الشحنة "تم الاستلام"');
+  setTimeout(()=>{
+    activeShip.status=3;
+    pushNotif('🚗','الناقل في الطريق','شحنتك #'+activeShip.id+' متجهة إلى '+activeShip.to);
+    openTrack(activeShip.id);renderHome();renderList();
+  },900);
+}
+function deliverDemo(){
+  activeShip.status=4;renderHome();renderList();openTrack(activeShip.id);
+  pushNotif('✅','تم تسليم شحنتك بنجاح 🎉','#'+activeShip.id+' — '+activeShip.from+' ← '+activeShip.to);
+  toast('💸 تحوّلت مستحقات الناقل بعد خصم العمولة');
+  setTimeout(()=>document.getElementById('m-rate').classList.add('on'),1000);
+}
 
 /* ================= QR ================= */
 function showQR(kind){
@@ -1246,7 +1324,7 @@ function sendTicket(){
     t.st='closed';
     t.reply='أهلًا بك 🌹 استلمنا طلبك وتمت معالجته — تأكد من التطبيق الآن، وإذا احتجت أي شيء نحن موجودون.';
     renderTickets();
-    fireSms('دعم طاير: تم الرد على تذكرتك #'+t.id+' — افتح التطبيق لقراءة الرد');
+    pushNotif('🎧','رد فريق الدعم على تذكرتك','#'+t.id+' — افتح التطبيق لقراءة الرد');
   },6000);
 }
 
