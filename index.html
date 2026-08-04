@@ -89,6 +89,16 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 .uptile:active{transform:scale(.98)}
 .uptile.done{border-style:solid;border-color:var(--ok);background:var(--ok-l)}
 .uptile .ic{font-size:26px;width:52px;text-align:center}
+/* ---- visual size picker ---- */
+.szgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.szcard{border:1.5px solid var(--line);border-radius:14px;padding:12px 10px;cursor:pointer;text-align:center;transition:.15s;background:#fff;position:relative}
+.szcard:active{transform:scale(.97)}
+.szcard.on{border-color:var(--sky);background:var(--sky-l);box-shadow:0 0 0 1px var(--sky)}
+.szcard .szic{font-size:30px;line-height:1}
+.szcard b{display:block;font-size:13.5px;margin-top:6px;color:var(--ink)}
+.szcard .ex{display:block;font-size:11px;color:var(--mut);margin-top:2px;line-height:1.4}
+.szcard .dim{display:block;font-size:10px;color:#94a3b8;margin-top:4px;direction:ltr}
+.szcard.on .chkmark{position:absolute;top:8px;left:8px;width:20px;height:20px;background:var(--sky);color:#fff;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center}
 .uptile img{width:52px;height:52px;object-fit:cover;border-radius:8px}
 .pulse-ic{font-size:56px;animation:pulseIc 1.6s infinite}
 @keyframes pulseIc{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
@@ -345,23 +355,13 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
         <div><label>مدينة الاستلام</label><select id="f-from"><option>الرياض</option><option>جدة</option><option>الدمام</option><option>أبها</option><option>القصيم</option><option>المدينة</option></select></div>
         <div><label>مدينة التسليم</label><select id="f-to"><option>جدة</option><option>الرياض</option><option>الدمام</option><option>أبها</option><option>القصيم</option><option>المدينة</option></select></div>
       </div>
-      <div id="tier-block" style="display:none">
-        <label>حجم الشحنة</label>
-        <select id="f-tier" onchange="recalcPrice()"></select>
-        <label>عدد الطرود / القطع</label>
-        <input id="f-qty" type="number" value="1" min="1" oninput="recalcPrice()">
-      </div>
+      <label>حجم الشحنة — اختر الأقرب لها 👇</label>
+      <div id="size-grid" class="szgrid"></div>
       <label>وصف الشحنة</label>
       <input id="f-desc" placeholder="مثال: كرتون أغراض شخصية">
       <div class="row">
-        <div><label>الوزن التقريبي (كجم)</label><input id="f-w" type="number" placeholder="12" oninput="recalcPrice()"></div>
+        <div><label>الوزن التقريبي (كجم)</label><input id="f-w" type="number" placeholder="مثال: 5" oninput="recalcPrice()"></div>
         <div><label>القيمة التقريبية (﷼)</label><input type="number" placeholder="500"></div>
-      </div>
-      <label>الأبعاد التقريبية (سم) — تحسّن دقة السعر للشحنات الكبيرة الخفيفة</label>
-      <div class="row">
-        <input id="f-dl" type="number" placeholder="طول" oninput="recalcPrice()">
-        <input id="f-dw" type="number" placeholder="عرض" oninput="recalcPrice()">
-        <input id="f-dh" type="number" placeholder="ارتفاع" oninput="recalcPrice()">
       </div>
       <div id="price-est" style="display:none;background:var(--sky-l);border-radius:12px;padding:12px 14px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -634,20 +634,20 @@ const S={
 };
 const STATUS=['نبحث عن ناقل','تم القبول','تم الاستلام','في الطريق','تم التسليم'];
 const SCHIP=['warn','blue','blue','blue','ok'];
-let activeShip=null, scanStage=1, nextId=4830, myTrip=null, storeReq=null, chatWith=null;
-/* أحجام صندوق الأفراد — سعر إضافي + حد أدنى للوزن الحجمي (لو ما دخّل الأبعاد) */
+let activeShip=null, scanStage=1, nextId=4830, myTrip=null, storeReq=null, chatWith=null, selectedSize='s';
+/* أحجام مصوّرة بأمثلة يومية — الزبون يختار الأقرب بدون ما يعرف السنتيمترات */
 const SSIZES={
-  s:{t:'صغير — ظرف / كيس',ic:'📩',kg:'حتى 5 كجم',sur:0,volKg:2},
-  m:{t:'متوسط — صندوق',ic:'📦',kg:'حتى 15 كجم',sur:15,volKg:8},
-  l:{t:'كبير — صندوق كبير',ic:'📦',kg:'حتى 30 كجم',sur:35,volKg:22},
+  env:{t:'ظرف / مستندات',ic:'✉️',ex:'أوراق، عقود، ملف',dim:'≈ حجم A4',volKg:1},
+  s:  {t:'صغير',ic:'📦',ex:'جوال، كتاب، عطر، ساعة',dim:'≈ علبة أحذية',volKg:3},
+  m:  {t:'متوسط',ic:'📦',ex:'ميكروويف، لابتوب، خلاط',dim:'≈ كرتون ميكروويف',volKg:9},
+  l:  {t:'كبير',ic:'🗳️',ex:'شاشة تلفزيون، كرسي مكتب',dim:'≈ كرتون تلفزيون',volKg:22},
+  xl: {t:'كبير جدًا',ic:'🧊',ex:'غسالة، ثلاجة صغيرة، دراجة',dim:'يحتاج وانيت',volKg:50},
 };
-const VOL_DIVISOR=5000; // سم³ لكل كجم (المعيار المتعارف عليه)
-/* الوزن المحتسب = الأكبر بين الفعلي والحجمي */
-function chargeableKg(actual,size,dims){
-  let vol=0;
-  if(dims&&dims.l&&dims.w&&dims.h) vol=(dims.l*dims.w*dims.h)/VOL_DIVISOR;
-  else vol=(SSIZES[size]||{}).volKg||0;
-  return Math.max(Math.round(Number(actual)||0), Math.round(vol));
+const VOL_DIVISOR=5000; // سم³ لكل كجم (لطلبات المتاجر بالأبعاد)
+/* الوزن المحتسب = الأكبر بين الفعلي والحجمي (حسب الحجم المختار) */
+function chargeableKg(actual,size){
+  const vol=(SSIZES[size]||{}).volKg||0;
+  return Math.max(Math.round(Number(actual)||0), vol);
 }
 /* أحجام الشحن للمتجر — أساس + سعر/كجم متدرج */
 const TIERS={
@@ -688,10 +688,9 @@ function estPrice(from,to,kg,tierKey){
   const t=TIERS[tierKey]||TIERS.small;
   return Math.max(t.base, Math.round(routeBase(from,to)*(tierKey==='small'?1:0.6) + kg*t.perKg));
 }
-/* سعر ثابت للأفراد: مسافة + وزن + حجم الصندوق */
-function estPriceSender(from,to,kg,size){
-  const s=SSIZES[size]||SSIZES.m;
-  return Math.max(20, Math.round(routeBase(from,to) + (Number(kg)||0)*2 + s.sur));
+/* سعر ثابت للأفراد: مسافة + الوزن المحتسب (يشمل الحجم) */
+function estPriceSender(from,to,chargeableKgVal){
+  return Math.max(20, Math.round(routeBase(from,to) + (Number(chargeableKgVal)||0)*2.2));
 }
 
 /* ================= auth & gates ================= */
@@ -928,12 +927,10 @@ function createShipment(){
   if(from===to){toast('⚠️ مدينة الاستلام والتسليم متطابقة');return;}
   if(!auth.loggedIn){toast('📲 سجّل دخولك لإتمام الطلب');requireLogin(createShipment);return;}
   const desc=document.getElementById('f-desc').value||'شحنة جديدة';
-  const w=Number(document.getElementById('f-w').value)||10;
-  const size=(document.getElementById('f-tier')||{}).value||'m';
-  const dims={l:Number(document.getElementById('f-dl').value)||0,w:Number(document.getElementById('f-dw').value)||0,h:Number(document.getElementById('f-dh').value)||0};
-  const ch=chargeableKg(w,size,dims);
-  const price=estPriceSender(from,to,ch,size);
-  const s={id:nextId++,from,to,desc,w,ch,size,price,status:0,code:'7349'};
+  const w=Number(document.getElementById('f-w').value)||chargeableKg(0,selectedSize);
+  const ch=chargeableKg(w,selectedSize);
+  const price=estPriceSender(from,to,ch);
+  const s={id:nextId++,from,to,desc,w,ch,size:selectedSize,price,status:0,code:'7349'};
   S.shipments.unshift(s);
   renderHome();renderList();
   toast('💳 تم حجز '+price+' ﷼ · نبحث لك عن ناقل على مسارك');
@@ -986,28 +983,32 @@ function usedWeight(){return myTrip?myTrip.accepted.reduce((a,s)=>a+Number(s.w||
 function tripEarnings(){return myTrip?myTrip.accepted.reduce((a,s)=>a+Math.round((s.bid||s.price||0)*0.85),0):0;}
 
 /* السعر الثابت للأفراد — يُحسب فورًا بالمسافة والوزن والحجم */
+function renderSizeGrid(){
+  document.getElementById('size-grid').innerHTML=Object.entries(SSIZES).map(([k,v])=>`
+    <div class="szcard ${k===selectedSize?'on':''}" onclick="setSize('${k}')">
+      ${k===selectedSize?'<span class="chkmark">✓</span>':''}
+      <span class="szic">${v.ic}</span>
+      <b>${v.t}</b>
+      <span class="ex">${v.ex}</span>
+      <span class="dim">${v.dim}</span>
+    </div>`).join('');
+}
+function setSize(k){selectedSize=k;renderSizeGrid();recalcPrice();}
 function recalcPrice(){
   const box=document.getElementById('price-est');
   const from=document.getElementById('f-from').value, to=document.getElementById('f-to').value;
   const kg=Number(document.getElementById('f-w').value)||0;
-  const size=(document.getElementById('f-tier')||{}).value||'m';
-  if(!kg){box.style.display='none';return;}
-  const dims={l:Number(document.getElementById('f-dl').value)||0,w:Number(document.getElementById('f-dw').value)||0,h:Number(document.getElementById('f-dh').value)||0};
-  const ch=chargeableKg(kg,size,dims);
-  const total=estPriceSender(from,to,ch,size);
+  const ch=chargeableKg(kg,selectedSize);
+  const total=estPriceSender(from,to,ch);
   box.style.display='block';
   document.getElementById('price-val').textContent=total+' ﷼';
   const inf=driveInfo(from,to,null);
-  const volNote = ch>kg ? ` · الوزن المحتسب ${ch} كجم (حجمي — أكبر من الفعلي ${kg})` : ` · الوزن المحتسب ${ch} كجم`;
+  const volNote = (kg&&ch>kg) ? ` · محسوب على الحجم (${ch} كجم)` : (kg?` · ${ch} كجم`:' · حسب الحجم المختار');
   document.getElementById('price-note').textContent='سعر ثابت'+(inf?' ('+inf.km+' كم)':'')+volNote;
 }
 function prepNewShip(){
-  const tb=document.getElementById('tier-block');
-  tb.style.display='block';
-  const sel=document.getElementById('f-tier');
-  const qtyRow=document.getElementById('f-qty'); if(qtyRow)qtyRow.parentElement.style.display='none';
-  const lbl=tb.querySelector('label'); if(lbl)lbl.textContent='حجم الصندوق';
-  sel.innerHTML=Object.entries(SSIZES).map(([k,v])=>`<option value="${k}"${k==='m'?' selected':''}>${v.ic} ${v.t} — ${v.kg}</option>`).join('');
+  if(!selectedSize)selectedSize='s';
+  renderSizeGrid();
   recalcPrice();
 }
 
