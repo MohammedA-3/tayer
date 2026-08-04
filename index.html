@@ -208,9 +208,9 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
   </svg></div>
   <h1>طاير</h1>
   <p>اشحن أغراضك مع رحلة رايحة أصلاً..<br>أسرع، أرخص، وبدون شركات شحن<br>وتوصل خلال ساعات</p>
-  <button class="rolecard" onclick="enter('sender')"><span class="ic">📦</span><span><b>أنا مُرسل</b><span>أبي أرسل شحنة مع أقرب رحلة</span></span></button>
-  <button class="rolecard" onclick="enter('carrier')"><span class="ic">🚗</span><span><b>أنا ناقل</b><span>عندي رحلة وأبي أستفيد من المساحة</span></span></button>
-  <button class="rolecard" onclick="enter('store')"><span class="ic">🏪</span><span><b>متجر</b><span>أوصّل طلبات عملائي بين المدن</span></span></button>
+  <button class="rolecard" onclick="enter('sender')"><span class="ic">📦</span><span><b>أرسل شحنتك</b><span>وصّل أغراضك مع أقرب رحلة رايحة</span></span></button>
+  <button class="rolecard" onclick="enter('carrier')"><span class="ic">🚗</span><span><b>انضم لنقل شحنات طاير</b><span>استفد من رحلاتك واربح من الطريق</span></span></button>
+  <button class="rolecard" onclick="enter('store')"><span class="ic">🚚</span><span><b>طلبات خاصة</b><span>شحنات كبيرة برحلة خاصة تختار ناقلها وتفاوضه</span></span></button>
 </div>
 
 <!-- ======== SMS BANNER ======== -->
@@ -351,7 +351,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
     <div class="roleswitch">
       <button id="rs-sender" onclick="setRole('sender')">📦 مرسل</button>
       <button id="rs-carrier" onclick="setRole('carrier')">🚗 ناقل</button>
-      <button id="rs-store" onclick="setRole('store')">🏪 متجر</button>
+      <button id="rs-store" onclick="setRole('store')">🚚 خاص</button>
     </div>
   </div>
   <div class="wrap" id="home-body"></div>
@@ -834,7 +834,7 @@ function approveDemo(){
 function setRole(r){
   role=r;
   ['sender','carrier','store'].forEach(x=>document.getElementById('rs-'+x).classList.toggle('act',x===r));
-  document.getElementById('hd-sub').textContent = r==='sender'?'أهلًا محمد 👋 وش تبي ترسل اليوم؟': r==='carrier'?'أهلًا محمد 👋 رحلتك الجاية ممكن تربّحك':'أهلًا متجر روائع 👋';
+  document.getElementById('hd-sub').textContent = r==='sender'?'أهلًا محمد 👋 وش تبي ترسل اليوم؟': r==='carrier'?'أهلًا محمد 👋 رحلتك الجاية ممكن تربّحك':'أهلًا 👋 جهّز طلبك الخاص';
   document.getElementById('nav-list-lbl').textContent = r==='carrier'?'رحلاتي':'شحناتي';
   renderHome();renderList();go('home');
 }
@@ -890,7 +890,7 @@ function renderHome(){
   if(role==='sender'||role==='store'){
     const active=S.shipments.filter(s=>s.status<4);
     h.innerHTML=`
-    ${role==='store'?`<div class="card" style="background:var(--sky-l);border:1.5px dashed var(--sky)"><b style="font-size:13.5px">🏪 حساب متجر</b><div class="mut" style="margin-top:4px">تقدر تشحن أحجامًا أكبر — طرود، بالتات، وحمولات كاملة بأسعار خاصة. وقريبًا رفع طلباتك دفعة عبر ملف Excel وربط API.</div></div>`:''}
+    ${role==='store'?`<div class="card" style="background:var(--sky-l);border:1.5px dashed var(--sky)"><b style="font-size:13.5px">🚚 طلبات خاصة</b><div class="mut" style="margin-top:4px">للشحنات الكبيرة والتجارية — طرود، بالتات، وحمولات كاملة بأسعار حسب الحجم، تختار ناقلها وتفاوضه بالشات. مناسب للمتاجر والمشاريع.</div></div>`:''}
     <button class="btn" onclick="${role==='store'?"go('storereq')":"go('newship')"}" style="margin-bottom:14px">${role==='store'?'🚚 اطلب رحلة خاصة':'📦 أنشئ طلب شحن جديد'}</button>
     <div class="sec-t">شحناتك النشطة</div>
     ${active.length?active.map(shipCard).join(''):'<div class="empty"><div class="ic">📭</div>ما عندك شحنات نشطة</div>'}
