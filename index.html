@@ -391,12 +391,12 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
   <div class="wrap">
     <div class="card">
       <div class="row">
-        <div><label>من</label><select id="t-from"><option>الرياض</option><option>جدة</option><option>الدمام</option><option>أبها</option></select></div>
-        <div><label>إلى</label><select id="t-to"><option>جدة</option><option>الرياض</option><option>الدمام</option><option>أبها</option></select></div>
+        <div><label>من</label><select id="t-from" onchange="recalcTrip()"><option>الرياض</option><option>جدة</option><option>مكة</option><option>المدينة</option><option>الدمام</option><option>القصيم</option><option>أبها</option><option>الطائف</option></select></div>
+        <div><label>إلى</label><select id="t-to" onchange="recalcTrip()"><option>جدة</option><option>الرياض</option><option>مكة</option><option>المدينة</option><option>الدمام</option><option>القصيم</option><option>أبها</option><option>الطائف</option></select></div>
       </div>
       <div class="row">
-        <div><label>تاريخ المغادرة</label><input id="t-date" type="date" value="2026-07-28"></div>
-        <div><label>وقت الانطلاق</label><input id="t-time" type="time" value="16:00"></div>
+        <div><label>تاريخ المغادرة</label><input id="t-date" type="date" value="2026-08-06"></div>
+        <div><label>وقت الانطلاق</label><input id="t-time" type="time" value="08:00" onchange="recalcTrip()"></div>
       </div>
       <label>نوع المركبة</label>
       <select id="t-veh"><option>سيدان</option><option>جيب / SUV</option><option>وانيت</option><option>باص</option><option>دينة</option></select>
@@ -404,6 +404,15 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
         <div><label>المساحة المتوفرة</label><select id="t-cap"><option>شنطة السيارة</option><option>نص الحمولة</option><option>حمولة كاملة</option></select></div>
         <div><label>أقصى وزن (كجم)</label><input id="t-maxw" type="number" value="40"></div>
       </div>
+    </div>
+    <div id="trip-est" class="card" style="display:none;background:var(--sky-l);border:1px solid #bae6fd">
+      <div class="sec-t" style="margin-top:0">🗺️ تقدير المسار</div>
+      <div style="display:flex;justify-content:space-around;text-align:center">
+        <div><div class="mut" style="font-size:11.5px">المسافة</div><b id="te-km" style="font-size:18px;color:var(--sky-d)">—</b></div>
+        <div><div class="mut" style="font-size:11.5px">مدة القيادة</div><b id="te-dur" style="font-size:18px;color:var(--sky-d)">—</b></div>
+        <div><div class="mut" style="font-size:11.5px">الوصول المتوقع</div><b id="te-arr" style="font-size:18px;color:var(--ok)">—</b></div>
+      </div>
+      <div class="mut" id="te-note" style="text-align:center;margin-top:10px;font-size:11.5px"></div>
     </div>
     <div class="mut" style="text-align:center;margin-bottom:12px">بعد نشر رحلتك تشوف الشحنات على مسارك وتضيف أكثر من شحنة لنفس الرحلة</div>
     <button class="btn" onclick="createTrip()">🚗 انشر الرحلة</button>
@@ -499,7 +508,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
       <div class="txn"><div>📄 شروط الاستخدام وسياسة الشحنات</div><span class="mut">›</span></div>
       <div class="txn" onclick="go('suprt')" style="cursor:pointer"><div>🎧 الدعم الفني</div><span class="mut">›</span></div>
     </div>
-    <button class="btn ghost sm" onclick="location.reload()">تسجيل الخروج</button>
+    <button class="btn ghost sm" onclick="try{localStorage.removeItem('tayer_loggedIn')}catch(e){};location.reload()">تسجيل الخروج</button>
   </div>
 </div>
 
@@ -593,9 +602,34 @@ const TIERS={
   pallet:{t:'بالتة / منصة نقالة',ic:'🗃️',base:120,perKg:1.5,maxKg:300,hint:'حتى 300 كجم'},
   bulk:{t:'شحنة جملة (حمولة)',ic:'🚚',base:350,perKg:0.8,maxKg:1500,hint:'حمولة وانيت/دينة'},
 };
-/* أساس المسار حسب المسافة التقريبية */
-const ROUTEBASE={'الرياض|جدة':40,'الرياض|الدمام':25,'الرياض|أبها':55,'الرياض|القصيم':20,'الرياض|المدينة':45,'جدة|مكة':10,'جدة|الطائف':12,'جدة|المدينة':30};
-function routeBase(from,to){return ROUTEBASE[from+'|'+to]||ROUTEBASE[to+'|'+from]||35;}
+/* مصفوفة المسافات بين المدن (كم تقريبية بالطريق) */
+const DIST={
+  'الرياض|جدة':950,'الرياض|مكة':870,'الرياض|المدينة':850,'الرياض|الدمام':400,'الرياض|القصيم':330,'الرياض|أبها':1000,'الرياض|الطائف':780,
+  'جدة|مكة':80,'جدة|المدينة':420,'جدة|الدمام':1340,'جدة|القصيم':800,'جدة|أبها':630,'جدة|الطائف':170,
+  'مكة|المدينة':450,'مكة|الدمام':1290,'مكة|القصيم':860,'مكة|أبها':560,'مكة|الطائف':90,
+  'المدينة|الدمام':1250,'المدينة|القصيم':550,'المدينة|أبها':1070,'المدينة|الطائف':520,
+  'الدمام|القصيم':600,'الدمام|أبها':1400,'الدمام|الطائف':1180,
+  'القصيم|أبها':1150,'القصيم|الطائف':740,'أبها|الطائف':620,
+};
+function distKm(a,b){if(a===b)return 0;return DIST[a+'|'+b]||DIST[b+'|'+a]||null;}
+/* حساب مدة القيادة والوصول المتوقع */
+function driveInfo(from,to,depTime){
+  const km=distKm(from,to); if(km===null)return null;
+  const hrs=km/95 + 0.5; // متوسط 95 كم/س + نصف ساعة استراحات
+  const mins=Math.round(hrs*60);
+  let arr='';
+  if(depTime){
+    const [h,m]=depTime.split(':').map(Number);
+    let tot=h*60+m+mins; const nextDay=tot>=1440; tot%=1440;
+    let ah=Math.floor(tot/60), am=tot%60, ap=ah<12?'ص':'م', h12=(ah%12)||12;
+    arr=h12+':'+String(am).padStart(2,'0')+ap+(nextDay?' (اليوم التالي)':'');
+  }
+  const dh=Math.floor(mins/60), dm=mins%60;
+  const dur=(dh?dh+' س ':'')+(dm?dm+' د':'')||'أقل من ساعة';
+  return {km,dur,arr};
+}
+/* أساس المسار حسب المسافة للتسعير */
+function routeBase(from,to){const k=distKm(from,to);return k===null?35:Math.max(10,Math.round(k*0.045));}
 function estPrice(from,to,kg,tierKey){
   const t=TIERS[tierKey]||TIERS.small;
   return Math.max(t.base, Math.round(routeBase(from,to)*(tierKey==='small'?1:0.6) + kg*t.perKg));
@@ -604,16 +638,31 @@ function estPrice(from,to,kg,tierKey){
 /* ================= auth & gates ================= */
 function sv(k,v){try{localStorage.setItem('tayer_'+k,v)}catch(e){}}
 function ld(k){try{return localStorage.getItem('tayer_'+k)}catch(e){return null}}
-let auth={phone:'',carrierStatus:ld('carrier')||'none'};
-let otpCode='', pendingRole='sender';
+let auth={phone:'',loggedIn:ld('loggedIn')==='1',carrierStatus:ld('carrier')||'none'};
+let otpCode='', pendingRole='sender', pendingAction=null;
 const docs={car:false,form:false,lic:false};
 
-function pickRole(r){
-  pendingRole=r;
+/* تصفّح كضيف بدون تسجيل — التسجيل يجي وقت طلب الخدمة */
+function enter(r){
   document.getElementById('splash').style.display='none';
-  document.getElementById('lg-icon').textContent = r==='sender'?'📦':r==='carrier'?'🚗':'🏪';
-  document.getElementById('lg-role').textContent = r==='sender'?'حساب مرسل':r==='carrier'?'حساب ناقل':'حساب متجر';
+  setRole(r);
+}
+/* افتح الدخول فقط عند الحاجة، ونفّذ العملية بعد نجاحه */
+function requireLogin(action){
+  if(auth.loggedIn){action&&action();return;}
+  pendingRole=role; pendingAction=action||null;
+  document.getElementById('lg-icon').textContent = role==='sender'?'📦':role==='carrier'?'🚗':'🏪';
+  document.getElementById('lg-role').textContent = role==='sender'?'حساب مرسل':role==='carrier'?'حساب ناقل':'حساب متجر';
   openGate('login');
+}
+function requireCarrierReady(action){
+  requireLogin(()=>{
+    if(auth.carrierStatus!=='approved'){
+      document.getElementById('cr-phone').value=auth.phone||'';
+      openGate(auth.carrierStatus==='pending'?'pending':'carreg');
+      toast('🪪 حساب الناقل يحتاج توثيق قبل استقبال الشحنات');
+    }else action&&action();
+  });
 }
 function backToSplash(){openGate(null);document.getElementById('splash').style.display='flex';}
 function openGate(g){
@@ -648,14 +697,11 @@ function verifyOtp(){
   if(v.length<4){toast('⚠️ أكمل الرمز المكوّن من 4 أرقام');return;}
   if(v!==otpCode){toast('❌ الرمز غير صحيح — شوف رسالة SMS فوق');return;}
   document.getElementById('sms').classList.remove('show');
-  if(pendingRole==='carrier'&&auth.carrierStatus!=='approved'){
-    document.getElementById('cr-phone').value=auth.phone;
-    openGate(auth.carrierStatus==='pending'?'pending':'carreg');
-    toast('✅ تم التحقق — أكمل تسجيل الناقل');
-  }else{
-    openGate(null);setRole(pendingRole);
-    toast('✅ تم تسجيل الدخول');
-  }
+  auth.loggedIn=true; sv('loggedIn','1');
+  openGate(null);
+  const act=pendingAction; pendingAction=null;
+  toast('✅ تم تسجيل الدخول');
+  if(act) act();
 }
 function pickDoc(inp,key){
   if(!inp.files||!inp.files[0])return;
@@ -698,12 +744,6 @@ function approveDemo(){
 
 /* ================= nav ================= */
 function setRole(r){
-  if(r==='carrier'&&auth.carrierStatus!=='approved'&&document.getElementById('splash').style.display==='none'){
-    document.getElementById('cr-phone').value=auth.phone||'';
-    openGate(auth.carrierStatus==='pending'?'pending':'carreg');
-    toast('🪪 حساب الناقل يحتاج تسجيل وتوثيق أولاً');
-    return;
-  }
   role=r;
   ['sender','carrier','store'].forEach(x=>document.getElementById('rs-'+x).classList.toggle('act',x===r));
   document.getElementById('hd-sub').textContent = r==='sender'?'أهلًا محمد 👋 وش تبي ترسل اليوم؟': r==='carrier'?'أهلًا محمد 👋 رحلتك الجاية ممكن تربّحك':'أهلًا متجر روائع 👋';
@@ -716,6 +756,7 @@ function go(s){
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('act',b.dataset.s===s));
   document.getElementById('sc-'+s).scrollTop=0;
   if(s==='newship')prepNewShip();
+  if(s==='newtrip')recalcTrip();
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600);}
 
@@ -735,13 +776,6 @@ function renderHome(){
       <div class="stat"><b>QR</b><span>استلام وتسليم موثّق</span></div>
       <div class="stat"><b>🛡️</b><span>المبلغ محجوز حتى التسليم</span></div>
     </div>
-    <div class="sec-t">أكثر المسارات نشاطًا اليوم</div>
-    <div class="card">
-      <div class="txn"><div>🛣️ الرياض ← جدة</div><span class="mut">34 رحلة متاحة · من 60 ﷼</span></div>
-      <div class="txn"><div>🛣️ الرياض ← الدمام</div><span class="mut">21 رحلة · من 45 ﷼</span></div>
-      <div class="txn"><div>🛣️ جدة ← مكة</div><span class="mut">18 رحلة · من 25 ﷼</span></div>
-      <div class="txn"><div>🛣️ الرياض ← القصيم</div><span class="mut">15 رحلة · من 40 ﷼</span></div>
-    </div>
     <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:#fff7ed;border:1px solid #fed7aa">
       <span style="font-size:22px">🛡️</span>
       <div style="font-size:12.5px;color:#9a3412;line-height:1.7"><b>نصيحة أمان:</b> خلّ التواصل والدفع داخل التطبيق دايم — أي ناقل يطلب تحويل خارجي بلّغ عنه فورًا.</div>
@@ -757,6 +791,11 @@ function renderHome(){
         <span class="chip blue">🕓 ${tripTimeLabel()}</span>
       </div>
       <div class="meta" style="margin-top:6px"><span>🚗 ${myTrip.veh}</span><span>📦 ${myTrip.cap}</span></div>
+      ${myTrip.km?`<div style="display:flex;justify-content:space-around;text-align:center;background:var(--bg);border-radius:12px;padding:10px;margin-top:10px">
+        <div><div class="mut" style="font-size:11px">المسافة</div><b style="font-size:15px;color:var(--sky-d)">${myTrip.km} كم</b></div>
+        <div><div class="mut" style="font-size:11px">مدة القيادة</div><b style="font-size:15px;color:var(--sky-d)">${myTrip.dur}</b></div>
+        <div><div class="mut" style="font-size:11px">الوصول المتوقع</div><b style="font-size:15px;color:var(--ok)">${myTrip.arr}</b></div>
+      </div>`:''}
       <div style="margin-top:12px">
         <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span class="mut">الحمولة: ${used} / ${maxw} كجم</span><span style="font-weight:700;color:${pct>90?'var(--bad)':'var(--sky-d)'}">${myTrip.accepted.length} شحنة</span></div>
         <div style="height:8px;background:var(--line);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${pct>90?'var(--bad)':'var(--ok)'};transition:.3s"></div></div>
@@ -764,7 +803,7 @@ function renderHome(){
       ${myTrip.accepted.length?`<div class="hr"></div>${myTrip.accepted.map(s=>`<div class="txn" style="padding:8px 2px"><div>📦 ${s.desc} <span class="mut">· ${s.w} كجم</span></div><span class="price" style="font-size:13px">+${Math.round((s.bid||s.price)*0.85)} ﷼</span></div>`).join('')}
       <div class="txn" style="padding:10px 2px;border:none"><b>صافي أرباح الرحلة</b><b class="price">${tripEarnings()} ﷼</b></div>`:'<div class="mut" style="margin-top:10px">اقبل شحنات من الأسفل لتعبئة رحلتك 👇</div>'}
     </div>`
-    :`<button class="btn" onclick="go('newtrip')" style="margin-bottom:14px">🚗 أضف رحلتك الجاية</button>
+    :`<button class="btn" onclick="requireCarrierReady(()=>go('newtrip'))" style="margin-bottom:14px">🚗 أضف رحلتك الجاية</button>
       <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:var(--warn-l);border:1px solid #fde68a">
         <span style="font-size:20px">🕓</span><div style="font-size:12.5px;color:#92400e;line-height:1.7">أضف رحلتك ووقت انطلاقها أول — بعدها تشوف الشحنات على مسارك وتقدر تجمع أكثر من شحنة في نفس الرحلة.</div>
       </div>`}
@@ -785,12 +824,6 @@ function renderHome(){
       </div>`).join('')}
     <div class="sec-t">أرباحك هذا الشهر</div>
     <div class="row" style="margin-bottom:12px"><div class="stat"><b>119 ﷼</b><span>صافي الأرباح</span></div><div class="stat"><b>3</b><span>شحنات وصّلتها</span></div><div class="stat"><b>4.9 ⭐</b><span>تقييمك</span></div></div>
-    <div class="sec-t">أعلى المسارات طلبًا</div>
-    <div class="card">
-      <div class="txn"><div>🔥 الرياض ← جدة</div><span class="mut">57 شحنة تنتظر · متوسط 75 ﷼</span></div>
-      <div class="txn"><div>🔥 جدة ← الرياض</div><span class="mut">44 شحنة · متوسط 70 ﷼</span></div>
-      <div class="txn"><div>🔥 الدمام ← الرياض</div><span class="mut">29 شحنة · متوسط 55 ﷼</span></div>
-    </div>
     <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:var(--sky-l)">
       <span style="font-size:22px">💡</span>
       <div style="font-size:12.5px;color:#075985;line-height:1.7"><b>زوّد أرباحك:</b> أضف رحلاتك القادمة بدري — الشحنات تنحجز قبل الرحلة بيوم أو يومين غالبًا.</div>
@@ -827,7 +860,7 @@ function renderList(){
         </div>
         <div class="meta"><span>🗓️ ${t.date}</span><span>🚗 ${t.car}</span><span>📦 ${t.cap}</span><span>⚖️ حتى ${t.maxw} كجم</span></div>
         <button class="btn sm ghost" onclick="go('home');toast('الشحنات المطابقة في الرئيسية')">عرض الشحنات المطابقة</button>
-      </div>`).join('') + `<button class="btn" onclick="go('newtrip')">＋ رحلة جديدة</button>`;
+      </div>`).join('') + `<button class="btn" onclick="requireCarrierReady(()=>go('newtrip'))">＋ رحلة جديدة</button>`;
   } else {
     b.innerHTML = S.shipments.map(shipCard).join('') + `<button class="btn" onclick="go('newship')">＋ طلب شحن جديد</button>`;
   }
@@ -838,6 +871,7 @@ function createShipment(){
   if(!document.getElementById('f-ack').checked){toast('⚠️ لازم توافق على إقرار الشحنة أولاً');return;}
   const from=document.getElementById('f-from').value,to=document.getElementById('f-to').value;
   if(from===to){toast('⚠️ مدينة الاستلام والتسليم متطابقة');return;}
+  if(!auth.loggedIn){toast('📲 سجّل دخولك لإتمام الطلب');requireLogin(createShipment);return;}
   const desc=document.getElementById('f-desc').value||'شحنة جديدة';
   const w=document.getElementById('f-w').value||10;
   const s={id:nextId++,from,to,desc,w,price:null,status:0,code:'7349',offers:[]};
@@ -900,13 +934,28 @@ function acceptBid(i){
   renderHome();renderList();
   setTimeout(()=>openTrack(s.id),700);
 }
+function recalcTrip(){
+  const box=document.getElementById('trip-est');
+  const from=document.getElementById('t-from').value, to=document.getElementById('t-to').value;
+  const time=document.getElementById('t-time').value;
+  if(from===to){box.style.display='block';document.getElementById('te-km').textContent='—';document.getElementById('te-dur').textContent='—';document.getElementById('te-arr').textContent='—';document.getElementById('te-note').textContent='اختر مدينتين مختلفتين';return;}
+  const inf=driveInfo(from,to,time);
+  box.style.display='block';
+  if(!inf){document.getElementById('te-note').textContent='المسافة غير متوفرة لهذا المسار';return;}
+  document.getElementById('te-km').textContent=inf.km+' كم';
+  document.getElementById('te-dur').textContent=inf.dur;
+  document.getElementById('te-arr').textContent=inf.arr||'—';
+  document.getElementById('te-note').textContent='انطلاق '+ (function(){let[h,m]=time.split(':').map(Number);return ((h%12)||12)+':'+String(m).padStart(2,'0')+(h<12?'ص':'م');})() +' ← وصول متوقع '+inf.arr+' · خطّط استلامك قبلها بوقت كافٍ';
+}
 function createTrip(){
   const from=document.getElementById('t-from').value, to=document.getElementById('t-to').value;
   if(from===to){toast('⚠️ مدينة الانطلاق والوصول متطابقة');return;}
   const d=document.getElementById('t-date').value, t=document.getElementById('t-time').value;
   const maxw=parseInt(document.getElementById('t-maxw').value)||40;
+  const inf=driveInfo(from,to,t);
   myTrip={from,to,date:d,time:t,cap:document.getElementById('t-cap').value,
-    veh:document.getElementById('t-veh').value,maxw,accepted:[]};
+    veh:document.getElementById('t-veh').value,maxw,accepted:[],
+    km:inf?inf.km:null,dur:inf?inf.dur:null,arr:inf?inf.arr:null};
   toast('🚗 انتشرت رحلتك! هذي الشحنات على مسارك');
   setTimeout(()=>{go('home');renderHome();},700);
 }
@@ -952,6 +1001,7 @@ function prepNewShip(){
   recalcPrice();
 }
 function openBid(id){
+  if(!auth.loggedIn||auth.carrierStatus!=='approved'){requireCarrierReady(()=>openBid(id));return;}
   if(!myTrip){toast('🕓 أضف رحلتك ووقت انطلاقها أولاً');go('newtrip');return;}
   const o=S.carrierOffers.find(x=>x.id===id);
   if(usedWeight()+Number(o.w) > myTrip.maxw){toast('⚠️ وزن الشحنة يتجاوز المتبقي من حمولة رحلتك');return;}
