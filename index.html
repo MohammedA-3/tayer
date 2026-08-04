@@ -375,14 +375,56 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
         <input type="checkbox" id="f-ack" style="width:auto;margin:2px 0 0"> أُقرّ بأن الشحنة نظامية وأن الوصف والصور مطابقة للمحتوى، وأتحمل مسؤولية مخالفة ذلك.
       </label>
     </div>
-    <button class="btn" onclick="createShipment()">📡 انشر الطلب واستقبل العروض</button>
+    <button class="btn" onclick="createShipment()">✅ أكّد الطلب — السعر ثابت</button>
   </div>
 </div>
 
-<!-- ======== OFFERS (sender) ======== -->
-<div class="screen" id="sc-offers">
-  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('list')">→</button> عروض الناقلين</h1></div></div>
-  <div class="wrap" id="offers-body"></div>
+<!-- ======== STORE PRIVATE TRIP REQUEST ======== -->
+<div class="screen" id="sc-storereq">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('home')">→</button> طلب رحلة خاصة</h1></div></div>
+  <div class="wrap">
+    <div class="card">
+      <div class="row">
+        <div><label>من</label><select id="sr-from" onchange="recalcStore()"><option>الرياض</option><option>جدة</option><option>مكة</option><option>المدينة</option><option>الدمام</option><option>القصيم</option><option>أبها</option><option>الطائف</option></select></div>
+        <div><label>إلى</label><select id="sr-to" onchange="recalcStore()"><option>جدة</option><option>الرياض</option><option>مكة</option><option>المدينة</option><option>الدمام</option><option>القصيم</option><option>أبها</option><option>الطائف</option></select></div>
+      </div>
+      <label>حجم الشحنة</label>
+      <select id="sr-tier" onchange="recalcStore()"></select>
+      <div class="row">
+        <div><label>عدد القطع</label><input id="sr-qty" type="number" value="1" min="1" oninput="recalcStore()"></div>
+        <div><label>الوزن التقريبي (كجم)</label><input id="sr-w" type="number" placeholder="120" oninput="recalcStore()"></div>
+      </div>
+      <div class="row">
+        <div><label>موعد انطلاق الرحلة</label><input id="sr-date" type="date" value="2026-08-06"></div>
+        <div><label>الوقت</label><input id="sr-time" type="time" value="08:00"></div>
+      </div>
+      <label>ملاحظات للناقل</label>
+      <textarea id="sr-note" rows="2" placeholder="مثال: بضاعة قابلة للكسر — تحتاج عناية"></textarea>
+    </div>
+    <div id="sr-est" style="display:none;background:var(--sky-l);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12.5px;color:#075985">💡 السعر التقديري حسب الحجم</span><b class="price" id="sr-price" style="font-size:19px">— ﷼</b></div>
+      <div class="mut" id="sr-note2" style="margin-top:4px;font-size:11.5px"></div>
+    </div>
+    <button class="btn" onclick="submitStoreReq()">🔎 اعرض الناقلين المتاحين</button>
+    <div class="mut" style="text-align:center;margin-top:8px;margin-bottom:16px">تشوف ناقلين على مسارك، تفاوضهم بالشات، وتختار اللي يناسبك</div>
+  </div>
+</div>
+
+<!-- ======== STORE — CARRIERS LIST ======== -->
+<div class="screen" id="sc-storecarr">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="go('storereq')">→</button> ناقلون متاحون</h1></div></div>
+  <div class="wrap" id="storecarr-body"></div>
+</div>
+
+<!-- ======== CHAT ======== -->
+<div class="screen" id="sc-chat">
+  <div class="hd"><div class="hd-row"><h1><button class="back" onclick="chatBack()">→</button> <span id="chat-title">محادثة</span></h1></div>
+    <div class="sub" style="margin-top:4px">التواصل داخل التطبيق فقط لحمايتك 🛡️</div></div>
+  <div class="wrap" id="chat-body" style="flex:1"></div>
+  <div style="position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:8px">
+    <input id="chat-in" placeholder="اكتب رسالتك..." style="margin:0" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="btn sm" style="width:auto;padding:10px 16px" onclick="sendChat()">إرسال</button>
+  </div>
 </div>
 
 <!-- ======== NEW TRIP (carrier) ======== -->
@@ -545,17 +587,6 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
   </div>
 </div>
 
-<div class="modal-bg" id="m-bid" onclick="if(event.target===this)this.classList.remove('on')">
-  <div class="modal">
-    <div class="grab"></div>
-    <h3>💰 قدّم عرضك</h3>
-    <p class="mut" id="bid-sub"></p>
-    <p class="mut" style="margin-top:4px">حدد المبلغ اللي توصّل فيه الشحنة — عمولة المنصة 15% تنخصم من العرض.</p>
-    <div style="height:12px"></div>
-    <input id="bid-input" type="number" inputmode="numeric" placeholder="مثال: 75" style="text-align:center;font-size:22px;font-weight:700">
-    <button class="btn" onclick="submitBid()">📨 إرسال العرض للمرسل</button>
-  </div>
-</div>
 
 <div class="modal-bg" id="m-rate" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="modal">
@@ -576,25 +607,28 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 let role='sender';
 const S={
   shipments:[
-    {id:4825,from:'الرياض',to:'أبها',desc:'دراجة أطفال',w:14,price:null,status:0,code:'7349',offers:[
-      {n:'تركي الشهراني',r:4.7,car:'تاهو 2021',t:'بكرة 6:00ص',p:110,trips:19,note:'أمرّ عليك من طريق الملك فهد'},
-      {n:'ماجد عسيري',r:4.9,car:'وانيت هايلوكس',t:'بكرة 2:00م',p:95,trips:42,note:'راجع أبها فاضي — السعر قابل للنقاش'},
-    ]},
-    {id:4821,from:'الرياض',to:'جدة',desc:'كرتون أغراض شخصية',w:12,price:80,status:2,carrier:'عبدالله السبيعي',car:'كامري 2023',rating:4.8,code:'7349'},
+    {id:4825,from:'الرياض',to:'أبها',desc:'دراجة أطفال',w:14,size:'l',price:135,status:0,code:'7349'},
+    {id:4821,from:'الرياض',to:'جدة',desc:'كرتون أغراض شخصية',w:12,size:'m',price:80,status:2,carrier:'عبدالله السبيعي',car:'كامري 2023',rating:4.8,code:'7349'},
     {id:4818,from:'الرياض',to:'الدمام',desc:'شاشة 32 بوصة',w:8,price:65,status:4,carrier:'سعد القحطاني',car:'يوكن 2022',rating:5.0,code:'1182'},
   ],
   trips:[
     {id:9012,from:'جدة',to:'الرياض',date:'الخميس 30 يوليو · 5:00م',car:'كامري 2023',cap:'شنطة السيارة',maxw:40,matched:2}
   ],
   carrierOffers:[
-    {id:5501,from:'جدة',to:'الرياض',desc:'شنطة ملابس',w:9,price:55,dist:'قريب من طريقك'},
-    {id:5502,from:'جدة',to:'الرياض',desc:'قطع غيار سيارة',w:15,price:75,dist:'على خط سيرك'},
-    {id:5503,from:'جدة',to:'القصيم',desc:'أجهزة منزلية صغيرة',w:20,price:120,dist:'انحراف 40 كم'},
+    {id:5501,from:'جدة',to:'الرياض',desc:'شنطة ملابس',w:9,size:'m',price:55,dist:'قريب من طريقك'},
+    {id:5502,from:'جدة',to:'الرياض',desc:'قطع غيار سيارة',w:15,size:'l',price:75,dist:'على خط سيرك'},
+    {id:5503,from:'جدة',to:'القصيم',desc:'أجهزة منزلية صغيرة',w:20,size:'l',price:120,dist:'انحراف 40 كم'},
   ]
 };
-const STATUS=['بانتظار العروض','تم القبول','تم الاستلام','في الطريق','تم التسليم'];
+const STATUS=['نبحث عن ناقل','تم القبول','تم الاستلام','في الطريق','تم التسليم'];
 const SCHIP=['warn','blue','blue','blue','ok'];
-let activeShip=null, scanStage=1, nextId=4830, bidTarget=null, myTrip=null;
+let activeShip=null, scanStage=1, nextId=4830, myTrip=null, storeReq=null, chatWith=null;
+/* أحجام صندوق الأفراد — سعر إضافي حسب الحجم */
+const SSIZES={
+  s:{t:'صغير — ظرف / كيس',ic:'📩',kg:'حتى 5 كجم',sur:0},
+  m:{t:'متوسط — صندوق',ic:'📦',kg:'حتى 15 كجم',sur:15},
+  l:{t:'كبير — صندوق كبير',ic:'📦',kg:'حتى 30 كجم',sur:35},
+};
 /* أحجام الشحن للمتجر — أساس + سعر/كجم متدرج */
 const TIERS={
   small:{t:'طرد عادي',ic:'📦',base:15,perKg:3,maxKg:20,hint:'حتى 20 كجم'},
@@ -633,6 +667,11 @@ function routeBase(from,to){const k=distKm(from,to);return k===null?35:Math.max(
 function estPrice(from,to,kg,tierKey){
   const t=TIERS[tierKey]||TIERS.small;
   return Math.max(t.base, Math.round(routeBase(from,to)*(tierKey==='small'?1:0.6) + kg*t.perKg));
+}
+/* سعر ثابت للأفراد: مسافة + وزن + حجم الصندوق */
+function estPriceSender(from,to,kg,size){
+  const s=SSIZES[size]||SSIZES.m;
+  return Math.max(20, Math.round(routeBase(from,to) + (Number(kg)||0)*2 + s.sur));
 }
 
 /* ================= auth & gates ================= */
@@ -757,6 +796,7 @@ function go(s){
   document.getElementById('sc-'+s).scrollTop=0;
   if(s==='newship')prepNewShip();
   if(s==='newtrip')recalcTrip();
+  if(s==='storereq')prepStoreReq();
 }
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2600);}
 
@@ -767,7 +807,7 @@ function renderHome(){
     const active=S.shipments.filter(s=>s.status<4);
     h.innerHTML=`
     ${role==='store'?`<div class="card" style="background:var(--sky-l);border:1.5px dashed var(--sky)"><b style="font-size:13.5px">🏪 حساب متجر</b><div class="mut" style="margin-top:4px">تقدر تشحن أحجامًا أكبر — طرود، بالتات، وحمولات كاملة بأسعار خاصة. وقريبًا رفع طلباتك دفعة عبر ملف Excel وربط API.</div></div>`:''}
-    <button class="btn" onclick="go('newship')" style="margin-bottom:14px">${role==='store'?'🚚 أنشئ طلب شحن تجاري':'📦 أنشئ طلب شحن جديد'}</button>
+    <button class="btn" onclick="${role==='store'?"go('storereq')":"go('newship')"}" style="margin-bottom:14px">${role==='store'?'🚚 اطلب رحلة خاصة':'📦 أنشئ طلب شحن جديد'}</button>
     <div class="sec-t">شحناتك النشطة</div>
     ${active.length?active.map(shipCard).join(''):'<div class="empty"><div class="ic">📭</div>ما عندك شحنات نشطة</div>'}
     <div class="sec-t">ليه طاير؟</div>
@@ -776,9 +816,9 @@ function renderHome(){
       <div class="stat"><b>QR</b><span>استلام وتسليم موثّق</span></div>
       <div class="stat"><b>🛡️</b><span>المبلغ محجوز حتى التسليم</span></div>
     </div>
-    <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:#fff7ed;border:1px solid #fed7aa">
-      <span style="font-size:22px">🛡️</span>
-      <div style="font-size:12.5px;color:#9a3412;line-height:1.7"><b>نصيحة أمان:</b> خلّ التواصل والدفع داخل التطبيق دايم — أي ناقل يطلب تحويل خارجي بلّغ عنه فورًا.</div>
+    <div class="card" style="display:flex;gap:10px;align-items:center;background:#fff7ed;border:1px solid #fed7aa">
+      <span style="font-size:20px">🛡️</span>
+      <div style="font-size:12.5px;color:#9a3412;line-height:1.6"><b>نصيحة أمان:</b> خلّ التواصل والدفع داخل التطبيق دايم.</div>
     </div>`;
   } else {
     const used=usedWeight(), maxw=myTrip?myTrip.maxw:40, pct=Math.min(100,Math.round(used/maxw*100));
@@ -807,21 +847,21 @@ function renderHome(){
       <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:var(--warn-l);border:1px solid #fde68a">
         <span style="font-size:20px">🕓</span><div style="font-size:12.5px;color:#92400e;line-height:1.7">أضف رحلتك ووقت انطلاقها أول — بعدها تشوف الشحنات على مسارك وتقدر تجمع أكثر من شحنة في نفس الرحلة.</div>
       </div>`}
-    <div class="sec-t">شحنات على خط سيرك <span class="chip blue">${routeChip}</span></div>
-    ${S.carrierOffers.map(o=>`
+    <div class="sec-t">شحنات وصلتك على مسارك <span class="chip blue">${routeChip}</span></div>
+    ${S.carrierOffers.length?S.carrierOffers.map(o=>`
       <div class="card ship">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="route">${o.from} <span class="arr">←</span> ${o.to}</div>
-          <div class="mut">ميزانية المرسل ≈ <b class="price" style="font-size:14px">${o.price} ﷼</b></div>
+          <div class="price" style="font-size:16px">${o.price} ﷼</div>
         </div>
-        <div class="meta"><span>📦 ${o.desc}</span><span>⚖️ ${o.w} كجم</span><span>📍 ${o.dist}</span></div>
-        ${o.bid
-          ?`<span class="chip blue" style="align-self:flex-start">📨 عرضك: ${o.bid} ﷼ · بانتظار رد المرسل</span>`
-          :`<div class="row">
-              <button class="btn sm green" onclick="openBid(${o.id})">💰 قدّم عرضك</button>
-              <button class="btn sm ghost" onclick="toast('👀 التفاصيل والصور تظهر هنا')">التفاصيل</button>
-            </div>`}
-      </div>`).join('')}
+        <div class="meta"><span>📦 ${o.desc}</span><span>⚖️ ${o.w} كجم</span><span>${SSIZES[o.size]?SSIZES[o.size].ic+' '+SSIZES[o.size].t.split(' ')[0]:''}</span><span>📍 ${o.dist}</span></div>
+        <div class="mut" style="font-size:11.5px">أجرتك بعد العمولة ≈ <b style="color:var(--ok)">${Math.round(o.price*0.85)} ﷼</b> · السعر ثابت محسوب تلقائيًا</div>
+        <div class="row">
+          <button class="btn sm green" onclick="acceptDispatch(${o.id})">✓ قبول</button>
+          <button class="btn sm ghost" onclick="rejectDispatch(${o.id})">✗ رفض</button>
+        </div>
+      </div>`).join('')
+      :`<div class="empty"><div class="ic">📡</div>${myTrip?'ما فيه شحنات جديدة على مسارك الآن — بنبلغك فور وصول شحنة':'أضف رحلتك عشان توصلك الشحنات تلقائيًا'}</div>`}
     <div class="sec-t">أرباحك هذا الشهر</div>
     <div class="row" style="margin-bottom:12px"><div class="stat"><b>119 ﷼</b><span>صافي الأرباح</span></div><div class="stat"><b>3</b><span>شحنات وصّلتها</span></div><div class="stat"><b>4.9 ⭐</b><span>تقييمك</span></div></div>
     <div class="card" style="display:flex;gap:10px;align-items:flex-start;background:var(--sky-l)">
@@ -831,20 +871,15 @@ function renderHome(){
   }
 }
 function shipCard(s){
-  const chip = s.status===0
-    ? `<span class="chip ${s.offers.length?'ok':'warn'}">📨 ${s.offers.length?s.offers.length+' عروض':'بانتظار العروض'}</span>`
-    : `<span class="chip ${SCHIP[s.status]}">${STATUS[s.status]}</span>`;
-  return `<div class="card ship" onclick="openShip(${s.id})" style="cursor:pointer">
+  const chip = `<span class="chip ${SCHIP[s.status]}">${s.status===0?'🔎 '+STATUS[0]:STATUS[s.status]}</span>`;
+  const sz = SSIZES[s.size]?`<span>${SSIZES[s.size].ic} ${SSIZES[s.size].t.split(' ')[0]}</span>`:'';
+  return `<div class="card ship" onclick="openTrack(${s.id})" style="cursor:pointer">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div class="route">${s.from} <span class="arr">←</span> ${s.to}</div>
       ${chip}
     </div>
-    <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span>${s.price?`<span class="price" style="font-size:13px">${s.price} ﷼</span>`:''}</div>
+    <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span>${sz}${s.price?`<span class="price" style="font-size:13px">${s.price} ﷼</span>`:''}</div>
   </div>`;
-}
-function openShip(id){
-  const s=S.shipments.find(x=>x.id===id);
-  if(s.status===0)openOffers(id);else openTrack(id);
 }
 
 /* ================= list tab ================= */
@@ -873,66 +908,23 @@ function createShipment(){
   if(from===to){toast('⚠️ مدينة الاستلام والتسليم متطابقة');return;}
   if(!auth.loggedIn){toast('📲 سجّل دخولك لإتمام الطلب');requireLogin(createShipment);return;}
   const desc=document.getElementById('f-desc').value||'شحنة جديدة';
-  const w=document.getElementById('f-w').value||10;
-  const s={id:nextId++,from,to,desc,w,price:null,status:0,code:'7349',offers:[]};
+  const w=Number(document.getElementById('f-w').value)||10;
+  const size=(document.getElementById('f-tier')||{}).value||'m';
+  const price=estPriceSender(from,to,w,size);
+  const s={id:nextId++,from,to,desc,w,size,price,status:0,code:'7349'};
   S.shipments.unshift(s);
   renderHome();renderList();
-  openOffers(s.id);
-  toast('📡 انتشر طلبك! بنبلغك أول ما توصلك عروض');
-  const incoming=[
-    {d:2000,o:{n:'عبدالله السبيعي',r:4.8,car:'كامري 2023',t:'اليوم 4:00م',p:80,trips:31,note:'طريقي عليك مباشرة'}},
-    {d:4500,o:{n:'فهد الدوسري',r:4.6,car:'تاهو 2021',t:'اليوم 9:30م',p:70,trips:12,note:'أوصلها لباب البيت'}},
-    {d:7500,o:{n:'نايف المطيري',r:5.0,car:'وانيت هايلوكس',t:'بكرة 7:00ص',p:95,trips:54,note:'حمولة واسعة ومؤمّنة'}},
-  ];
-  incoming.forEach(x=>setTimeout(()=>{
+  toast('💳 تم حجز '+price+' ﷼ · نبحث لك عن ناقل على مسارك');
+  openTrack(s.id);
+  // محاكاة التوزيع التلقائي: أقرب ناقل يقبل خلال ثوانٍ
+  setTimeout(()=>{
     if(s.status!==0)return;
-    s.offers.push(x.o);
-    toast('📨 وصلك عرض جديد من '+x.o.n);
-    if(activeShip===s&&document.getElementById('sc-offers').classList.contains('on'))renderOffers();
+    Object.assign(s,{carrier:'عبدالله السبيعي',car:'كامري 2023',rating:4.8,status:1});
+    fireSms('طاير: قبل ناقل شحنتك #'+s.id+' 🎉 عبدالله السبيعي في طريقه لاستلامها');
     renderHome();renderList();
-  },x.d));
-}
-function openOffers(id){
-  activeShip=S.shipments.find(x=>x.id===id);
-  renderOffers();
-  go('offers');
-}
-function renderOffers(){
-  const s=activeShip;
-  document.getElementById('offers-body').innerHTML=`
-    <div class="card ship">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="route">${s.from} <span class="arr">←</span> ${s.to}</div>
-        <span class="chip warn">طلبك منشور</span>
-      </div>
-      <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span></div>
-    </div>
-    <div class="sec-t">العروض الواصلة (${s.offers.length})</div>
-    ${s.offers.length?s.offers.map((o,i)=>`
-    <div class="card ship">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="display:flex;gap:10px;align-items:center">
-          <div style="width:42px;height:42px;border-radius:50%;background:var(--sky-l);display:flex;align-items:center;justify-content:center;font-size:19px">🧔</div>
-          <div><b style="font-size:14px">${o.n}</b><div class="mut">⭐ ${o.r} · ${o.trips} رحلة · ✓ موثق</div></div>
-        </div>
-        <div class="price">${o.p} ﷼</div>
-      </div>
-      <div class="meta"><span>🚗 ${o.car}</span><span>🕓 ينطلق ${o.t}</span></div>
-      ${o.note?`<div class="mut" style="background:var(--bg);border-radius:10px;padding:8px 12px">💬 «${o.note}»</div>`:''}
-      <div class="row">
-        <button class="btn sm green" onclick="acceptBid(${i})">✓ اقبل — ادفع ${o.p} ﷼</button>
-        <button class="btn sm ghost" onclick="toast('💬 تقدر تفاوض الناقل داخل التطبيق')">فاوض</button>
-      </div>
-    </div>`).join('')
-    :`<div class="empty"><div class="ic">📡</div>طلبك وصل للناقلين على نفس الخط...<br>العروض بتظهر هنا أول بأول</div>`}
-  `;
-}
-function acceptBid(i){
-  const s=activeShip,o=s.offers[i];
-  s.carrier=o.n;s.car=o.car;s.rating=o.r;s.price=o.p;s.status=1;
-  toast('💳 تم الدفع وحجز '+o.p+' ﷼ حتى التسليم');
-  renderHome();renderList();
-  setTimeout(()=>openTrack(s.id),700);
+    if(activeShip===s)openTrack(s.id);
+    toast('🎉 قبل ناقل شحنتك! اعرض له رمز الاستلام');
+  },4000);
 }
 function recalcTrip(){
   const box=document.getElementById('trip-est');
@@ -971,63 +963,150 @@ function tripTimeLabel(){
 function usedWeight(){return myTrip?myTrip.accepted.reduce((a,s)=>a+Number(s.w||0),0):0;}
 function tripEarnings(){return myTrip?myTrip.accepted.reduce((a,s)=>a+Math.round((s.bid||s.price||0)*0.85),0):0;}
 
-/* حاسبة السعر المقترح (للمرسل والمتجر) */
+/* السعر الثابت للأفراد — يُحسب فورًا بالمسافة والوزن والحجم */
 function recalcPrice(){
   const box=document.getElementById('price-est');
   const from=document.getElementById('f-from').value, to=document.getElementById('f-to').value;
   const kg=Number(document.getElementById('f-w').value)||0;
-  const tierSel=document.getElementById('f-tier');
-  const tierKey=(role==='store'&&tierSel)?tierSel.value:'small';
-  const qty=role==='store'?(Number(document.getElementById('f-qty').value)||1):1;
+  const size=(document.getElementById('f-tier')||{}).value||'m';
   if(!kg){box.style.display='none';return;}
-  const per=estPrice(from,to,kg,tierKey);
-  const total=per*qty;
+  const total=estPriceSender(from,to,kg,size);
   box.style.display='block';
   document.getElementById('price-val').textContent=total+' ﷼';
-  document.getElementById('price-note').textContent = role==='store'
-    ? `${TIERS[tierKey].t} × ${qty} — سعر تقديري ${per} ﷼ للقطعة، قابل للتفاوض عبر العروض`
-    : 'محسوب حسب المسافة والوزن — تقدر تنشر فيه أو تعدّله وتستقبل عروض';
+  const inf=driveInfo(from,to,null);
+  document.getElementById('price-note').textContent='سعر ثابت محسوب تلقائيًا'+(inf?' ('+inf.km+' كم)':'')+' — يوصل الناقلين على مسارك مباشرة';
 }
 function prepNewShip(){
   const tb=document.getElementById('tier-block');
-  if(role==='store'){
-    tb.style.display='block';
-    const sel=document.getElementById('f-tier');
-    if(!sel.dataset.filled){
-      sel.innerHTML=Object.entries(TIERS).map(([k,v])=>`<option value="${k}">${v.ic} ${v.t} — ${v.hint}</option>`).join('');
-      sel.dataset.filled='1';
-    }
-  }else{tb.style.display='none';}
+  tb.style.display='block';
+  const sel=document.getElementById('f-tier');
+  const qtyRow=document.getElementById('f-qty'); if(qtyRow)qtyRow.parentElement.style.display='none';
+  const lbl=tb.querySelector('label'); if(lbl)lbl.textContent='حجم الصندوق';
+  sel.innerHTML=Object.entries(SSIZES).map(([k,v])=>`<option value="${k}"${k==='m'?' selected':''}>${v.ic} ${v.t} — ${v.kg}</option>`).join('');
   recalcPrice();
 }
-function openBid(id){
-  if(!auth.loggedIn||auth.carrierStatus!=='approved'){requireCarrierReady(()=>openBid(id));return;}
+
+/* ================= store: private trip request + chat ================= */
+function prepStoreReq(){
+  const sel=document.getElementById('sr-tier');
+  if(!sel.dataset.filled){
+    sel.innerHTML=Object.entries(TIERS).map(([k,v])=>`<option value="${k}">${v.ic} ${v.t} — ${v.hint}</option>`).join('');
+    sel.dataset.filled='1';
+  }
+  recalcStore();
+}
+function recalcStore(){
+  const box=document.getElementById('sr-est');
+  const from=document.getElementById('sr-from').value,to=document.getElementById('sr-to').value;
+  const tier=document.getElementById('sr-tier').value||'small';
+  const qty=Number(document.getElementById('sr-qty').value)||1;
+  const kg=Number(document.getElementById('sr-w').value)||0;
+  if(!kg){box.style.display='none';return;}
+  const per=estPrice(from,to,kg,tier), total=per*qty;
+  box.style.display='block';
+  document.getElementById('sr-price').textContent=total+' ﷼';
+  document.getElementById('sr-note2').textContent=`${TIERS[tier].t} × ${qty} — تقديري ${per} ﷼ للقطعة، قابل للتفاوض مع الناقل`;
+}
+function submitStoreReq(){
+  const from=document.getElementById('sr-from').value,to=document.getElementById('sr-to').value;
+  if(from===to){toast('⚠️ اختر مدينتين مختلفتين');return;}
+  const kg=Number(document.getElementById('sr-w').value)||0;
+  if(!kg){toast('⚠️ أدخل الوزن التقريبي');return;}
+  if(!auth.loggedIn){toast('📲 سجّل دخولك لإرسال الطلب');requireLogin(submitStoreReq);return;}
+  const tier=document.getElementById('sr-tier').value;
+  storeReq={from,to,tier,qty:Number(document.getElementById('sr-qty').value)||1,w:kg,
+    date:document.getElementById('sr-date').value,time:document.getElementById('sr-time').value,
+    note:document.getElementById('sr-note').value,est:estPrice(from,to,kg,tier)*(Number(document.getElementById('sr-qty').value)||1)};
+  renderStoreCarriers();
+  go('storecarr');
+}
+function renderStoreCarriers(){
+  const inf=driveInfo(storeReq.from,storeReq.to,storeReq.time);
+  const cands=[
+    {n:'شركة نقل السريع',r:4.9,car:'دينة مبردة',trips:210,price:storeReq.est,note:'نخدم المتاجر — فواتير ضريبية'},
+    {n:'مؤسسة دروب اللوجستية',r:4.7,car:'وانيت مغلق',trips:96,price:Math.round(storeReq.est*1.1),note:'تغليف وتأمين على الشحنة'},
+    {n:'خالد الحربي (ناقل مستقل)',r:4.8,car:'هايلوكس',trips:54,price:Math.round(storeReq.est*0.9),note:'أرخص عرض — راجع فاضي'},
+  ];
+  document.getElementById('storecarr-body').innerHTML=`
+    <div class="card ship">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="route">${storeReq.from} <span class="arr">←</span> ${storeReq.to}</div>
+        <span class="chip blue">${TIERS[storeReq.tier].t}</span>
+      </div>
+      <div class="meta"><span>×${storeReq.qty} قطعة</span><span>⚖️ ${storeReq.w} كجم</span>${inf?`<span>🗺️ ${inf.km} كم · وصول ${inf.arr}</span>`:''}</div>
+    </div>
+    <div class="sec-t">اختر الناقل وفاوضه بالشات</div>
+    ${cands.map(c=>`
+    <div class="card ship">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="width:42px;height:42px;border-radius:50%;background:var(--sky-l);display:flex;align-items:center;justify-content:center;font-size:19px">🚚</div>
+          <div><b style="font-size:13.5px">${c.n}</b><div class="mut">⭐ ${c.r} · ${c.trips} رحلة · ✓ موثق</div></div>
+        </div>
+        <div class="price">${c.price} ﷼</div>
+      </div>
+      <div class="meta"><span>🚗 ${c.car}</span></div>
+      <div class="mut" style="background:var(--bg);border-radius:10px;padding:8px 12px">💬 «${c.note}»</div>
+      <div class="row">
+        <button class="btn sm ghost" onclick="openChat('${c.n}','storecarr')">💬 محادثة وتفاوض</button>
+        <button class="btn sm green" onclick="chooseStoreCarrier('${c.n}','${c.car}',${c.r},${c.price})">✓ اختَر واعتمد</button>
+      </div>
+    </div>`).join('')}`;
+}
+function chooseStoreCarrier(n,car,r,price){
+  const s={id:nextId++,from:storeReq.from,to:storeReq.to,desc:TIERS[storeReq.tier].t+' ×'+storeReq.qty,
+    w:storeReq.w,size:'l',price,status:1,carrier:n,car,rating:r,code:'7349'};
+  S.shipments.unshift(s);
+  fireSms('طاير: اعتمدت '+n+' لرحلتك الخاصة — تم حجز '+price+' ﷼ حتى التسليم');
+  toast('✓ اعتمدت الناقل — تم حجز المبلغ');
+  renderHome();renderList();
+  openTrack(s.id);
+}
+
+/* ---- chat (store↔carrier & sender↔carrier) ---- */
+const chats={};
+let chatReturn='home';
+function openChat(name,back){
+  chatWith=name; chatReturn=back||'track';
+  if(!chats[name])chats[name]=[{who:'them',tx:'أهلًا وسهلًا 🌹 كيف أقدر أساعدك في شحنتك؟'}];
+  document.getElementById('chat-title').textContent=name;
+  renderChat();
+  go('chat');
+}
+function chatBack(){go(chatReturn);}
+function renderChat(){
+  const msgs=chats[chatWith]||[];
+  document.getElementById('chat-body').innerHTML=msgs.map(m=>
+    `<div style="max-width:78%;margin:6px 0;padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.6;${m.who==='me'?'background:var(--sky);color:#fff;margin-right:auto;border-radius:14px 4px 14px 14px':'background:#fff;border:1px solid var(--line);margin-left:auto;border-radius:4px 14px 14px 14px'}">${m.tx}</div>`
+  ).join('')||'<div class="empty">ابدأ المحادثة</div>';
+  const b=document.getElementById('chat-body'); b.scrollTop=b.scrollHeight;
+}
+function sendChat(){
+  const inp=document.getElementById('chat-in'); const t=inp.value.trim(); if(!t)return;
+  chats[chatWith].push({who:'me',tx:t}); inp.value=''; renderChat();
+  setTimeout(()=>{
+    const replies=['تمام، أقدر أوصلها لك في الوقت المطلوب 👍','السعر قابل للتفاوض، وش يناسبك؟','أكيد، الشحنة بأمان معنا ومؤمّنة.','تم، جاهز أستلمها من موقعك.'];
+    chats[chatWith].push({who:'them',tx:replies[Math.floor((chats[chatWith].length)%replies.length)]});
+    if(document.getElementById('sc-chat').classList.contains('on'))renderChat();
+  },1400);
+}
+/* الناقل يقبل الشحنة مباشرة (سعر ثابت) */
+function acceptDispatch(id){
+  if(!auth.loggedIn||auth.carrierStatus!=='approved'){requireCarrierReady(()=>acceptDispatch(id));return;}
   if(!myTrip){toast('🕓 أضف رحلتك ووقت انطلاقها أولاً');go('newtrip');return;}
   const o=S.carrierOffers.find(x=>x.id===id);
+  if(!o)return;
   if(usedWeight()+Number(o.w) > myTrip.maxw){toast('⚠️ وزن الشحنة يتجاوز المتبقي من حمولة رحلتك');return;}
-  bidTarget=id;
-  document.getElementById('bid-sub').textContent=`${o.from} ← ${o.to} · ${o.desc} · ${o.w} كجم`;
-  document.getElementById('bid-input').value='';
-  document.getElementById('m-bid').classList.add('on');
-}
-function submitBid(){
-  const p=parseInt(document.getElementById('bid-input').value);
-  if(!p||p<1){toast('⚠️ أدخل مبلغ عرضك');return;}
-  const o=S.carrierOffers.find(x=>x.id===bidTarget);
-  o.bid=p;
-  document.getElementById('m-bid').classList.remove('on');
+  myTrip.accepted.push(o);
+  S.carrierOffers=S.carrierOffers.filter(x=>x.id!==id);
   renderHome();
-  toast('📨 انرسل عرضك للمرسل — بنبلغك إذا قبل');
-  setTimeout(()=>{
-    if(!o.bid)return;
-    if(myTrip && !myTrip.accepted.some(x=>x.id===o.id)){
-      myTrip.accepted.push(o);
-      S.carrierOffers=S.carrierOffers.filter(x=>x.id!==o.id);
-      renderHome();
-    }
-    fireSms('طاير: قبل المرسل عرضك بـ '+p+' ﷼ للشحنة "'+o.desc+'" — أُضيفت لرحلتك');
-    toast('🎉 قبل المرسل! أُضيفت الشحنة لرحلتك — تقدر تجمع أكثر');
-  },3000);
+  fireSms('طاير: قبلت شحنة "'+o.desc+'" ('+o.price+' ﷼) — أُضيفت لرحلتك، توجه لنقطة الاستلام');
+  toast('✓ قبلت الشحنة — أُضيفت لرحلتك');
+}
+function rejectDispatch(id){
+  S.carrierOffers=S.carrierOffers.filter(x=>x.id!==id);
+  renderHome();
+  toast('تم تخطي الشحنة — بتوصل لناقل ثاني');
 }
 
 /* ================= tracking ================= */
@@ -1036,7 +1115,7 @@ function openTrack(id){
   const s=activeShip;
   const steps=[
     ['تم إنشاء الطلب','ودفع المبلغ في المحفظة الآمنة'],
-    ['قبل الناقل الشحنة',s.carrier+' · '+s.car],
+    ['قبِل الناقل الشحنة',s.carrier?s.carrier+' · '+s.car:'نبحث عن أقرب ناقل على مسارك'],
     ['تم الاستلام','بعد مسح رمز QR من المرسل'],
     ['في الطريق','تتبع مباشر لموقع الناقل'],
     ['تم التسليم','وتحويل المستحقات للناقل'],
@@ -1061,11 +1140,11 @@ function openTrack(id){
         </div>`).join('')}
       </div>
     </div>
-    <div class="card" style="display:flex;align-items:center;gap:12px">
+    ${s.carrier?`<div class="card" style="display:flex;align-items:center;gap:12px">
       <div style="width:46px;height:46px;border-radius:50%;background:var(--sky-l);display:flex;align-items:center;justify-content:center;font-size:20px">🧔</div>
       <div style="flex:1"><b style="font-size:14px">${s.carrier}</b><div class="mut">⭐ ${s.rating} · ${s.car} · ✓ موثق</div></div>
-      <button class="bell" style="background:var(--sky-l);color:var(--sky-d)" onclick="toast('💬 المحادثة داخل التطبيق فقط لحمايتك')">💬</button>
-    </div>
+      <button class="bell" style="background:var(--sky-l);color:var(--sky-d)" onclick="openChat('${s.carrier}')">💬</button>
+    </div>`:`<div class="card" style="text-align:center;padding:22px"><div class="pulse-ic" style="font-size:40px">📡</div><b style="font-size:14px">نبحث عن أقرب ناقل على مسارك</b><div class="mut" style="margin-top:4px">بنبلغك فور قبول ناقل — السعر ${s.price} ﷼ محجوز في محفظتك</div></div>`}
     ${s.status===1?`<button class="btn" onclick="showQR('pickup')">🔐 اعرض رمز الاستلام للناقل</button>
       <div style="height:8px"></div><button class="btn ghost sm" onclick="advanceDemo()">⏩ (تجربة) الناقل استلم الشحنة</button>`:''}
     ${s.status===2||s.status===3?`<button class="btn" onclick="showQR('drop')">🔐 رمز التسليم — للمستلم</button>
