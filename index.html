@@ -11,6 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="طاير">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --sky:#0ea5e9; --sky-d:#0284c7; --sky-l:#e0f2fe;
@@ -99,6 +101,10 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 .szcard .ex{display:block;font-size:11px;color:var(--mut);margin-top:2px;line-height:1.4}
 .szcard .dim{display:block;font-size:10px;color:#94a3b8;margin-top:4px;direction:ltr}
 .szcard.on .chkmark{position:absolute;top:8px;left:8px;width:20px;height:20px;background:var(--sky);color:#fff;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center}
+.maptip{background:#0f2440;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;padding:2px 8px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.maptip::before{display:none}
+#livemap{z-index:0}
+.leaflet-container{font-family:inherit;background:#e0f2fe}
 .uptile img{width:52px;height:52px;object-fit:cover;border-radius:8px}
 .pulse-ic{font-size:56px;animation:pulseIc 1.6s infinite}
 @keyframes pulseIc{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
@@ -623,7 +629,7 @@ const S={
   carrierOffers:[
     {id:5501,from:'جدة',to:'الرياض',desc:'شنطة ملابس',w:9,size:'m',price:55,dist:'قريب من طريقك'},
     {id:5502,from:'جدة',to:'الرياض',desc:'قطع غيار سيارة',w:15,size:'l',price:75,dist:'على خط سيرك'},
-    {id:5503,from:'جدة',to:'القصيم',desc:'أجهزة منزلية صغيرة',w:20,size:'l',price:120,dist:'انحراف 40 كم'},
+    {id:5503,from:'جدة',to:'بريدة',desc:'أجهزة منزلية صغيرة',w:20,size:'l',price:120,dist:'انحراف 40 كم'},
   ]
 };
 const STATUS=['نبحث عن ناقل','تم القبول','تم الاستلام','في الطريق','تم التسليم'];
@@ -650,16 +656,30 @@ const TIERS={
   pallet:{t:'بالتة / منصة نقالة',ic:'🗃️',base:120,perKg:1.5,maxKg:300,hint:'حتى 300 كجم'},
   bulk:{t:'شحنة جملة (حمولة)',ic:'🚚',base:350,perKg:0.8,maxKg:1500,hint:'حمولة وانيت/دينة'},
 };
-/* مصفوفة المسافات بين المدن (كم تقريبية بالطريق) */
-const DIST={
-  'الرياض|جدة':950,'الرياض|مكة':870,'الرياض|المدينة':850,'الرياض|الدمام':400,'الرياض|القصيم':330,'الرياض|أبها':1000,'الرياض|الطائف':780,
-  'جدة|مكة':80,'جدة|المدينة':420,'جدة|الدمام':1340,'جدة|القصيم':800,'جدة|أبها':630,'جدة|الطائف':170,
-  'مكة|المدينة':450,'مكة|الدمام':1290,'مكة|القصيم':860,'مكة|أبها':560,'مكة|الطائف':90,
-  'المدينة|الدمام':1250,'المدينة|القصيم':550,'المدينة|أبها':1070,'المدينة|الطائف':520,
-  'الدمام|القصيم':600,'الدمام|أبها':1400,'الدمام|الطائف':1180,
-  'القصيم|أبها':1150,'القصيم|الطائف':740,'أبها|الطائف':620,
+/* إحداثيات مدن السعودية [lat,lng] — تغطي كل المدن الرئيسية */
+const CITIES={
+  'الرياض':[24.71,46.68],'جدة':[21.49,39.19],'مكة':[21.42,39.83],'المدينة':[24.47,39.61],
+  'الدمام':[26.43,50.10],'الخبر':[26.28,50.21],'الظهران':[26.29,50.15],'الجبيل':[27.01,49.66],
+  'الأحساء':[25.38,49.59],'القطيف':[26.56,49.99],'بريدة':[26.36,43.98],'عنيزة':[26.09,43.99],
+  'الرس':[25.87,43.50],'حائل':[27.52,41.69],'تبوك':[28.38,36.57],'الطائف':[21.27,40.42],
+  'ينبع':[24.09,38.06],'رابغ':[22.80,39.03],'أبها':[18.22,42.51],'خميس مشيط':[18.31,42.73],
+  'جازان':[16.89,42.57],'نجران':[17.49,44.13],'الباحة':[20.01,41.47],'بيشة':[20.00,42.60],
+  'القنفذة':[19.13,41.08],'عرعر':[30.98,41.02],'سكاكا':[29.97,40.21],'القريات':[31.33,37.34],
+  'حفر الباطن':[28.43,45.97],'الخرج':[24.15,47.30],'المجمعة':[25.90,45.36],'الدوادمي':[24.51,44.39],
+  'عفيف':[23.91,42.92],'وادي الدواسر':[20.45,44.79],'شرورة':[17.47,47.11],'أملج':[25.03,37.27],'ضباء':[27.35,35.69],
 };
-function distKm(a,b){if(a===b)return 0;return DIST[a+'|'+b]||DIST[b+'|'+a]||null;}
+function haversine(a,b){
+  const R=6371, toR=x=>x*Math.PI/180;
+  const dLat=toR(b[0]-a[0]), dLng=toR(b[1]-a[1]);
+  const s=Math.sin(dLat/2)**2 + Math.cos(toR(a[0]))*Math.cos(toR(b[0]))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function distKm(a,b){
+  if(a===b)return 0;
+  const ca=CITIES[a], cb=CITIES[b];
+  if(!ca||!cb)return null;
+  return Math.round(haversine(ca,cb)*1.17/10)*10; // ×1.17 تقريب الطريق مقابل الخط المستقيم
+}
 /* حساب مدة القيادة والوصول المتوقع */
 function driveInfo(from,to,depTime){
   const km=distKm(from,to); if(km===null)return null;
@@ -1175,31 +1195,63 @@ function rejectDispatch(id){
   toast('تم تخطي الشحنة — بتوصل لناقل ثاني');
 }
 
-/* ================= live map (KSA) ================= */
-const CITYXY={'الرياض':[369,255],'جدة':[151,368],'مكة':[170,371],'المدينة':[163,264],'الدمام':[468,195],'القصيم':[290,198],'أبها':[247,482],'الطائف':[187,376]};
-const KSA_PATH='M26,94 L87,98 L145,35 L364,101 L419,123 L465,186 L489,259 L512,280 L617,329 L524,424 L378,508 L271,543 L250,532 L204,438 L145,368 L99,280 L58,193 L29,123 Z';
-function renderKsaMap(s){
-  const a=CITYXY[s.from], b=CITYXY[s.to];
-  if(!a||!b)return '';
-  const prog = s.status>=4?1 : s.status===3?0.62 : s.status===2?0.18 : s.status===1?0.05 : 0;
+/* ================= live map ================= */
+/* أيقونة حسب نوع المركبة */
+function vehIcon(car){
+  const c=(car||'')+'';
+  if(/دينة|داينا|شاحنة|تريلا|قلاب|نقل ثقيل|دباب/.test(c))return '🚛';
+  if(/وانيت|هايلوكس|بيك ?أب|نقل/.test(c))return '🛻';
+  if(/باص|حافلة|هايس/.test(c))return '🚐';
+  if(/جيب|تاهو|يوكن|SUV|لاندكروزر|جي ?إم ?سي|فورتشنر|باترول|اكسبيديشن|تاهوي/.test(c))return '🚙';
+  return '🚗'; // سيدان افتراضي
+}
+function tripProgress(s){return s.status>=4?1 : s.status===3?0.62 : s.status===2?0.18 : s.status===1?0.05 : 0;}
+/* تعبئة كل قوائم المدن */
+function fillCities(){
+  const opts=Object.keys(CITIES).map(c=>`<option>${c}</option>`).join('');
+  [['f-from','الرياض'],['f-to','جدة'],['t-from','الرياض'],['t-to','جدة'],['sr-from','الرياض'],['sr-to','جدة']].forEach(([id,def])=>{
+    const el=document.getElementById(id); if(el){el.innerHTML=opts; el.value=def;}
+  });
+}
+let _map=null,_mapKey='';
+/* خريطة Leaflet حقيقية بالشوارع (وإن غابت المكتبة: بديل SVG) */
+function initLiveMap(s){
+  const el=document.getElementById('livemap'); if(!el)return;
+  const a=CITIES[s.from], b=CITIES[s.to]; if(!a||!b){el.innerHTML='';return;}
+  const prog=tripProgress(s);
   const mx=a[0]+(b[0]-a[0])*prog, my=a[1]+(b[1]-a[1])*prog;
+  if(!window.L){el.innerHTML=ksaSvg(s);return;} // بديل بدون إنترنت
+  if(_map){try{_map.remove()}catch(e){}_map=null;}
+  _map=L.map(el,{zoomControl:false,attributionControl:false,dragging:true,scrollWheelZoom:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(_map);
+  L.polyline([a,b],{color:'#94a3b8',weight:3,dashArray:'4 10'}).addTo(_map);
+  L.polyline([a,[mx,my]],{color:'#0ea5e9',weight:5}).addTo(_map);
+  L.marker(a,{icon:L.divIcon({html:'<div style="background:#0284c7;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',className:'',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(_map).bindTooltip(s.from,{permanent:true,direction:'top',className:'maptip'});
+  L.marker(b,{icon:L.divIcon({html:'<div style="font-size:24px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))">🏁</div>',className:'',iconSize:[24,24],iconAnchor:[4,22]})}).addTo(_map).bindTooltip(s.to,{permanent:true,direction:'top',className:'maptip'});
+  if(prog>0)L.marker([mx,my],{icon:L.divIcon({html:'<div style="font-size:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))">'+vehIcon(s.car)+'</div>',className:'',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(_map);
+  _map.fitBounds(L.latLngBounds([a,b]).pad(0.35));
+  setTimeout(()=>{try{_map.invalidateSize()}catch(e){}},200);
+}
+/* بديل SVG يعرض أي مدينة عبر إسقاط الإحداثيات */
+function proj(c){const p=CITIES[c];return [(p[1]-34)/22*640,(32-p[0])/16*560];}
+const KSA_PATH='M26,94 L87,98 L145,35 L364,101 L419,123 L465,186 L489,259 L512,280 L617,329 L524,424 L378,508 L271,543 L250,532 L204,438 L145,368 L99,280 L58,193 L29,123 Z';
+function ksaSvg(s){
+  const a=proj(s.from), b=proj(s.to), prog=tripProgress(s);
+  const mx=a[0]+(b[0]-a[0])*prog, my=a[1]+(b[1]-a[1])*prog;
+  return `<svg viewBox="0 0 640 560" style="width:100%;height:220px;display:block;background:linear-gradient(160deg,#eff6ff,#e0f2fe)">
+    <path d="${KSA_PATH}" fill="#f8fafc" stroke="#bae6fd" stroke-width="2"/>
+    <line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>
+    <line x1="${a[0]}" y1="${a[1]}" x2="${mx}" y2="${my}" stroke="#0ea5e9" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="${a[0]}" cy="${a[1]}" r="8" fill="#0284c7" stroke="#fff" stroke-width="3"/><text x="${a[0]}" y="${a[1]+24}" font-size="15" font-weight="bold" fill="#0f2440" text-anchor="middle">${s.from}</text>
+    <text x="${b[0]}" y="${b[1]-14}" font-size="20" text-anchor="middle">🏁</text><text x="${b[0]}" y="${b[1]+22}" font-size="15" font-weight="bold" fill="#0f2440" text-anchor="middle">${s.to}</text>
+    ${prog>0?`<text x="${mx}" y="${my+8}" font-size="26" text-anchor="middle">${vehIcon(s.car)}</text>`:''}
+  </svg>`;
+}
+function mapPanel(s){
   const inf=driveInfo(s.from,s.to,null);
-  const dots=Object.entries(CITYXY).map(([n,p])=>{
-    const on=(n===s.from||n===s.to);
-    return `<circle cx="${p[0]}" cy="${p[1]}" r="${on?0:3}" fill="#94a3b8"/>${on?'':`<text x="${p[0]}" y="${p[1]-6}" font-size="12" fill="#64748b" text-anchor="middle">${n}</text>`}`;
-  }).join('');
-  const pctText = s.status>=4?'وصلت':s.status>=2?Math.round(prog*100)+'٪ من الطريق':'بانتظار الاستلام';
-  return `
-  <div class="card" style="padding:0;overflow:hidden">
-    <svg viewBox="0 0 640 560" style="width:100%;display:block;background:linear-gradient(160deg,#eff6ff,#e0f2fe)">
-      <path d="${KSA_PATH}" fill="#f8fafc" stroke="#bae6fd" stroke-width="2"/>
-      ${dots}
-      <line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="2 12" stroke-linecap="round"/>
-      <line x1="${a[0]}" y1="${a[1]}" x2="${mx}" y2="${my}" stroke="#0ea5e9" stroke-width="5" stroke-linecap="round"/>
-      <g><circle cx="${a[0]}" cy="${a[1]}" r="9" fill="#0284c7"/><circle cx="${a[0]}" cy="${a[1]}" r="4" fill="#fff"/><text x="${a[0]}" y="${a[1]+26}" font-size="15" font-weight="bold" fill="#0f2440" text-anchor="middle">${s.from}</text></g>
-      <g><path d="M${b[0]} ${b[1]-14} l14 5 l-14 5 Z" fill="#ef4444"/><line x1="${b[0]}" y1="${b[1]-14}" x2="${b[0]}" y2="${b[1]}" stroke="#0f2440" stroke-width="2"/><text x="${b[0]}" y="${b[1]+22}" font-size="15" font-weight="bold" fill="#0f2440" text-anchor="middle">${s.to}</text></g>
-      ${prog>0?`<g><circle cx="${mx}" cy="${my}" r="18" fill="#0ea5e9" opacity=".2"><animate attributeName="r" values="14;22;14" dur="1.6s" repeatCount="indefinite"/></circle><circle cx="${mx}" cy="${my}" r="13" fill="#fff" stroke="#0ea5e9" stroke-width="2"/><text x="${mx}" y="${my+5}" font-size="15" text-anchor="middle">🚚</text></g>`:''}
-    </svg>
+  const pctText = s.status>=4?'وصلت':s.status>=2?Math.round(tripProgress(s)*100)+'٪ من الطريق':'بانتظار الاستلام';
+  return `<div class="card" style="padding:0;overflow:hidden">
+    <div id="livemap" style="height:220px;background:#e0f2fe"></div>
     <div style="display:flex;justify-content:space-around;text-align:center;padding:12px;border-top:1px solid var(--line)">
       <div><div class="mut" style="font-size:11px">المسافة</div><b style="color:var(--sky-d)">${inf?inf.km+' كم':'—'}</b></div>
       <div><div class="mut" style="font-size:11px">مدة الرحلة</div><b style="color:var(--sky-d)">${inf?inf.dur:'—'}</b></div>
@@ -1227,7 +1279,7 @@ function openTrack(id){
       </div>
       <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span><span class="price" style="font-size:13px">${s.price} ﷼</span></div>
     </div>
-    ${s.status>=1?renderKsaMap(s):''}
+    ${s.status>=1?mapPanel(s):''}
     <div class="card">
       <div class="sec-t" style="margin-top:0">مسار الشحنة</div>
       <div class="steps">
@@ -1251,6 +1303,7 @@ function openTrack(id){
     ${s.status===4?`<button class="btn ghost" onclick="document.getElementById('m-rate').classList.add('on')">⭐ قيّم الناقل</button>`:''}
   `;
   go('track');
+  if(s.status>=1)setTimeout(()=>initLiveMap(s),60);
 }
 function advanceDemo(){
   activeShip.status=2;
@@ -1332,8 +1385,10 @@ function sendTicket(){
 function rate(n){document.querySelectorAll('#stars span').forEach((s,i)=>s.classList.toggle('on',i<n));}
 
 /* init */
+fillCities();
 setRole('sender');
 renderTickets();
+badge();
 const otpIn=document.getElementById('otp-in');
 otpIn.addEventListener('input',()=>{
   otpIn.value=otpIn.value.replace(/\D/g,'').slice(0,4);
