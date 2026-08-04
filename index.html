@@ -101,6 +101,11 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 .szcard .ex{display:block;font-size:11px;color:var(--mut);margin-top:2px;line-height:1.4}
 .szcard .dim{display:block;font-size:10px;color:#94a3b8;margin-top:4px;direction:ltr}
 .szcard.on .chkmark{position:absolute;top:8px;left:8px;width:20px;height:20px;background:var(--sky);color:#fff;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center}
+.paycard{flex:1;border:1.5px solid var(--line);border-radius:14px;padding:12px 10px;cursor:pointer;text-align:center;transition:.15s;background:#fff}
+.paycard:active{transform:scale(.97)}
+.paycard.on{border-color:var(--sky);background:var(--sky-l);box-shadow:0 0 0 1px var(--sky)}
+.paycard b{display:block;font-size:13px;margin-top:5px;color:var(--ink)}
+.paycard span{display:block;font-size:10.5px;color:var(--mut);margin-top:3px;line-height:1.4}
 .maptip{background:#0f2440;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;padding:2px 8px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .maptip::before{display:none}
 #livemap{z-index:0}
@@ -380,6 +385,15 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
         <div><label>موعد الاستلام</label><input type="date" value="2026-07-28"></div>
         <div><label>آخر موعد للتسليم</label><input type="date" value="2026-07-30"></div>
       </div>
+      <label>طريقة الدفع</label>
+      <div class="row" style="gap:10px">
+        <div class="paycard on" id="pay-card" onclick="setPay('card')">
+          <div style="font-size:22px">💳</div><b>بطاقة داخل التطبيق</b><span>موصى به — مبلغك محجوز ومضمون حتى التسليم</span>
+        </div>
+        <div class="paycard" id="pay-cash" onclick="setPay('cash')">
+          <div style="font-size:22px">💵</div><b>كاش عند الاستلام</b><span>تسلّم الأجرة للمندوب وقت يستلم شحنتك</span>
+        </div>
+      </div>
       <label>صور الشحنة</label>
       <button class="btn ghost sm" onclick="toast('📷 تم إرفاق صورتين')">＋ إضافة صور</button>
       <div style="height:10px"></div>
@@ -627,14 +641,14 @@ const S={
     {id:9012,from:'جدة',to:'الرياض',date:'الخميس 30 يوليو · 5:00م',car:'كامري 2023',cap:'شنطة السيارة',maxw:40,matched:2}
   ],
   carrierOffers:[
-    {id:5501,from:'جدة',to:'الرياض',desc:'شنطة ملابس',w:9,size:'m',price:55,dist:'قريب من طريقك'},
-    {id:5502,from:'جدة',to:'الرياض',desc:'قطع غيار سيارة',w:15,size:'l',price:75,dist:'على خط سيرك'},
-    {id:5503,from:'جدة',to:'بريدة',desc:'أجهزة منزلية صغيرة',w:20,size:'l',price:120,dist:'انحراف 40 كم'},
+    {id:5501,from:'جدة',to:'الرياض',desc:'شنطة ملابس',w:9,size:'m',price:55,pay:'cash',dist:'قريب من طريقك'},
+    {id:5502,from:'جدة',to:'الرياض',desc:'قطع غيار سيارة',w:15,size:'l',price:75,pay:'card',dist:'على خط سيرك'},
+    {id:5503,from:'جدة',to:'بريدة',desc:'أجهزة منزلية صغيرة',w:20,size:'l',price:120,pay:'card',dist:'انحراف 40 كم'},
   ]
 };
 const STATUS=['نبحث عن ناقل','تم القبول','تم الاستلام','في الطريق','تم التسليم'];
 const SCHIP=['warn','blue','blue','blue','ok'];
-let activeShip=null, scanStage=1, nextId=4830, myTrip=null, storeReq=null, chatWith=null, selectedSize='s';
+let activeShip=null, scanStage=1, nextId=4830, myTrip=null, storeReq=null, chatWith=null, selectedSize='s', payMethod='card';
 /* أحجام مصوّرة بأمثلة يومية — الزبون يختار الأقرب بدون ما يعرف السنتيمترات */
 const SSIZES={
   env:{t:'ظرف / مستندات',ic:'✉️',ex:'أوراق، عقود، ملف',dim:'≈ حجم A4',volKg:1},
@@ -924,8 +938,10 @@ function renderHome(){
           <div class="route">${o.from} <span class="arr">←</span> ${o.to}</div>
           <div class="price" style="font-size:16px">${o.price} ﷼</div>
         </div>
-        <div class="meta"><span>📦 ${o.desc}</span><span>⚖️ ${o.w} كجم</span><span>${SSIZES[o.size]?SSIZES[o.size].ic+' '+SSIZES[o.size].t.split(' ')[0]:''}</span><span>📍 ${o.dist}</span></div>
-        <div class="mut" style="font-size:11.5px">أجرتك بعد العمولة ≈ <b style="color:var(--ok)">${Math.round(o.price*0.85)} ﷼</b> · السعر ثابت محسوب تلقائيًا</div>
+        <div class="meta"><span>📦 ${o.desc}</span><span>⚖️ ${o.w} كجم</span><span>${SSIZES[o.size]?SSIZES[o.size].ic+' '+SSIZES[o.size].t.split(' ')[0]:''}</span><span class="chip ${o.pay==='cash'?'warn':'ok'}" style="font-size:10.5px">${o.pay==='cash'?'💵 كاش':'💳 مدفوع'}</span></div>
+        <div class="mut" style="font-size:11.5px">${o.pay==='cash'
+          ?'تحصّل <b>'+o.price+' ﷼ كاش</b> من العميل · عمولة طاير '+Math.round(o.price*0.15)+' ﷼ تُخصم من محفظتك'
+          :'أجرتك بعد العمولة ≈ <b style="color:var(--ok)">'+Math.round(o.price*0.85)+' ﷼</b> تُحوّل لمحفظتك عند التسليم'}</div>
         <div class="row">
           <button class="btn sm green" onclick="acceptDispatch(${o.id})">✓ قبول</button>
           <button class="btn sm ghost" onclick="rejectDispatch(${o.id})">✗ رفض</button>
@@ -981,10 +997,12 @@ function createShipment(){
   const w=Number(document.getElementById('f-w').value)||chargeableKg(0,selectedSize);
   const ch=chargeableKg(w,selectedSize);
   const price=estPriceSender(from,to,ch);
-  const s={id:nextId++,from,to,desc,w,ch,size:selectedSize,price,status:0,code:'7349'};
+  const s={id:nextId++,from,to,desc,w,ch,size:selectedSize,price,pay:payMethod,status:0,code:'7349'};
   S.shipments.unshift(s);
   renderHome();renderList();
-  toast('💳 تم حجز '+price+' ﷼ · نبحث لك عن ناقل على مسارك');
+  toast(payMethod==='cash'
+    ? '💵 تجهّز '+price+' ﷼ كاش للمندوب عند الاستلام · نبحث لك عن ناقل'
+    : '💳 تم حجز '+price+' ﷼ · نبحث لك عن ناقل على مسارك');
   openTrack(s.id);
   // محاكاة التوزيع التلقائي: أقرب ناقل يقبل خلال ثوانٍ
   setTimeout(()=>{
@@ -1045,6 +1063,7 @@ function renderSizeGrid(){
     </div>`).join('');
 }
 function setSize(k){selectedSize=k;renderSizeGrid();recalcPrice();}
+function setPay(m){payMethod=m;document.getElementById('pay-card').classList.toggle('on',m==='card');document.getElementById('pay-cash').classList.toggle('on',m==='cash');}
 function recalcPrice(){
   const box=document.getElementById('price-est');
   const from=document.getElementById('f-from').value, to=document.getElementById('f-to').value;
@@ -1060,6 +1079,7 @@ function recalcPrice(){
 function prepNewShip(){
   if(!selectedSize)selectedSize='s';
   renderSizeGrid();
+  setPay('card');
   recalcPrice();
 }
 
@@ -1264,10 +1284,11 @@ function mapPanel(s){
 function openTrack(id){
   activeShip=S.shipments.find(s=>s.id===id);
   const s=activeShip;
+  const cash=s.pay==='cash';
   const steps=[
-    ['تم إنشاء الطلب','ودفع المبلغ في المحفظة الآمنة'],
+    ['تم إنشاء الطلب',cash?'الدفع كاش عند الاستلام':'ودفع المبلغ في المحفظة الآمنة'],
     ['قبِل الناقل الشحنة',s.carrier?s.carrier+' · '+s.car:'نبحث عن أقرب ناقل على مسارك'],
-    ['تم الاستلام','بعد مسح رمز QR من المرسل'],
+    ['تم الاستلام',cash?'سلّم الأجرة كاش وامسح رمز QR':'بعد مسح رمز QR من المرسل'],
     ['في الطريق','تتبع مباشر لموقع الناقل'],
     ['تم التسليم','وتحويل المستحقات للناقل'],
   ];
@@ -1277,8 +1298,9 @@ function openTrack(id){
         <div class="route">${s.from} <span class="arr">←</span> ${s.to}</div>
         <span class="chip ${SCHIP[s.status]}">${STATUS[s.status]}</span>
       </div>
-      <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span><span class="price" style="font-size:13px">${s.price} ﷼</span></div>
+      <div class="meta"><span>#${s.id}</span><span>📦 ${s.desc}</span><span>⚖️ ${s.w} كجم</span><span class="chip ${cash?'warn':'ok'}" style="font-size:11px">${cash?'💵 كاش':'💳 مدفوع'} ${s.price} ﷼</span></div>
     </div>
+    ${cash&&s.status===1?`<div class="card" style="display:flex;gap:10px;align-items:center;background:var(--warn-l);border:1px solid #fde68a"><span style="font-size:22px">💵</span><div style="font-size:12.5px;color:#92400e;line-height:1.6"><b>جهّز ${s.price} ﷼ كاش</b> — سلّمها للمندوب وقت يستلم شحنتك، وبعدها اعرض له رمز الاستلام.</div></div>`:''}
     ${s.status>=1?mapPanel(s):''}
     <div class="card">
       <div class="sec-t" style="margin-top:0">مسار الشحنة</div>
@@ -1316,9 +1338,14 @@ function advanceDemo(){
   },900);
 }
 function deliverDemo(){
-  activeShip.status=4;renderHome();renderList();openTrack(activeShip.id);
-  pushNotif('✅','تم تسليم شحنتك بنجاح 🎉','#'+activeShip.id+' — '+activeShip.from+' ← '+activeShip.to);
-  toast('💸 تحوّلت مستحقات الناقل بعد خصم العمولة');
+  const s=activeShip; s.status=4;renderHome();renderList();openTrack(s.id);
+  pushNotif('✅','تم تسليم شحنتك بنجاح 🎉','#'+s.id+' — '+s.from+' ← '+s.to);
+  const commission=Math.round(s.price*0.15);
+  if(s.pay==='cash'){
+    toast('💵 استلم المندوب الأجرة كاش · خُصمت عمولة طاير '+commission+' ﷼ من محفظته');
+  }else{
+    toast('💸 تحوّلت مستحقات الناقل ('+(s.price-commission)+' ﷼) بعد خصم العمولة');
+  }
   setTimeout(()=>document.getElementById('m-rate').classList.add('on'),1000);
 }
 
