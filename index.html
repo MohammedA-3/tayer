@@ -71,10 +71,33 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 #nav button.act{color:var(--sky-d)}
 /* ---------- splash ---------- */
 #splash{position:absolute;inset:0;background:linear-gradient(160deg,#0284c7,#0ea5e9 55%,#38bdf8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;color:#fff;text-align:center;padding:30px;overflow-y:auto}
-#splash .logo{font-size:64px;animation:fly 2.5s ease-in-out infinite}
+/* --- تسلسل حركي: سطر ← يطير الطير ← سطر --- */
+#splash .logo{animation:dash 1.5s cubic-bezier(.6,0,.3,1) 1.7s 1 both}
+#splash .logo .hover{display:block;animation:fly 2.5s ease-in-out infinite}
 @keyframes fly{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-14px) rotate(4deg)}}
-#splash h1{font-size:38px;margin:10px 0 6px}
-#splash p{font-size:15px;opacity:.92;line-height:1.8;margin-bottom:34px}
+@keyframes dash{
+  0%{transform:translateX(0) scale(1)}
+  8%{transform:translateX(26px) scale(.94) rotate(6deg)}
+  38%{transform:translateX(-135vw) scale(.86) rotate(-16deg);opacity:0}
+  39%{transform:translateX(135vw) scale(.86) rotate(-16deg);opacity:0}
+  72%{transform:translateX(0) scale(1.07) rotate(-4deg);opacity:1}
+  100%{transform:translateX(0) scale(1)}
+}
+#splash .streak{position:absolute;top:50%;transform:translateY(-135px);right:0;left:0;height:130px;pointer-events:none;opacity:0;animation:streak 1.5s ease-out 1.7s 1 both;z-index:0}
+@keyframes streak{0%,20%{opacity:0}38%{opacity:.55}60%,100%{opacity:0}}
+#splash h1{font-size:38px;margin:10px 0 6px;animation:rise .6s ease-out .35s both}
+#splash .l1{font-size:15.5px;opacity:.95;line-height:1.8;animation:rise .7s ease-out .85s both}
+#splash .l2{font-size:17px;font-weight:700;line-height:1.8;margin-bottom:30px;color:#FBD08A;animation:pop .6s cubic-bezier(.2,1.4,.4,1) 3s both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+#splash .rolecard{animation:rise .6s ease-out both}
+#splash .rolecard:nth-of-type(1){animation-delay:3.35s}
+#splash .rolecard:nth-of-type(2){animation-delay:3.5s}
+#splash .rolecard:nth-of-type(3){animation-delay:3.65s}
+@media(prefers-reduced-motion:reduce){
+  #splash .logo,#splash .logo .hover,#splash h1,#splash .l1,#splash .l2,#splash .rolecard,#splash .streak{animation:none;opacity:1;transform:none}
+  #splash .streak{opacity:0}
+}
 .rolecard{background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.35);border-radius:18px;padding:16px;width:100%;margin-bottom:12px;color:#fff;text-align:right;cursor:pointer;display:flex;align-items:center;gap:14px;transition:.15s}
 .rolecard:active{transform:scale(.97);background:rgba(255,255,255,.25)}
 /* ---------- gates (login/otp/reg/pending) ---------- */
@@ -188,7 +211,8 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 
 <!-- ======== SPLASH / ROLE PICK ======== -->
 <div id="splash">
-  <div class="logo"><svg width="130" height="130" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <div class="streak"><svg width="100%" height="130" viewBox="0 0 400 130" preserveAspectRatio="none"><g stroke="#fff" stroke-linecap="round" fill="none"><path d="M400 40 H150" stroke-width="3" opacity=".5"/><path d="M400 65 H90" stroke-width="4" opacity=".7"/><path d="M400 90 H180" stroke-width="2.5" opacity=".45"/></g></svg></div>
+  <div class="logo"><span class="hover"><svg width="130" height="130" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
     <path d="M8 26 H21 M4 34 H13 M10 18 H18" stroke="rgba(255,255,255,.45)" stroke-width="2.5" stroke-linecap="round"/>
     <path d="M46 45 L39 59 M55 45 L62 59" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>
     <g>
@@ -205,9 +229,10 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
     <circle cx="72.6" cy="29.6" r="2" fill="#0f172a"/>
     <path d="M40 34 C34 16 50 4 66 7 C56 12 51 22 49 33 C46 35.2 42 35.2 40 34 Z" fill="#a5dcf9"/>
     <path d="M30 42.5 C40 46.5 52 46.5 60 42.5 C52 48 38 48 30 42.5 Z" fill="#cde7f8"/>
-  </svg></div>
+  </svg></span></div>
   <h1>طاير</h1>
-  <p>اشحن أغراضك مع رحلة رايحة أصلاً..<br>أسرع، أرخص، وبدون شركات شحن<br>وتوصل خلال ساعات</p>
+  <p class="l1">اشحن أغراضك مع رحلة رايحة أصلاً..</p>
+  <p class="l2">أسرع، أرخص، وأنت في البيت 🏡</p>
   <button class="rolecard" onclick="enter('sender')"><span class="ic">📦</span><span><b>أرسل شحنتك</b><span>وصّل أغراضك مع أقرب رحلة رايحة</span></span></button>
   <button class="rolecard" onclick="enter('carrier')"><span class="ic">🚗</span><span><b>انضم لنقل شحنات طاير</b><span>استفد من رحلاتك واربح من الطريق</span></span></button>
   <button class="rolecard" onclick="enter('store')"><span class="ic">🚚</span><span><b>طلبات خاصة</b><span>شحنات كبيرة برحلة خاصة تختار ناقلها وتفاوضه</span></span></button>
