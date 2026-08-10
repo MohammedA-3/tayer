@@ -1,0 +1,242 @@
+<title>طاير — خطة الإطلاق</title>
+<style>
+:root{
+  --ink:#0f2440; --mut:#5b7089; --line:#dbe4ee;
+  --bg:#eef4fb; --card:#ffffff; --card2:#f6f9fd;
+  --sky:#0ea5e9; --sky-d:#0284c7; --skyw:#e0f2fe;
+  --gold:#c8862f; --goldw:#fdf3e3;
+  --ok:#0f9d6b; --okw:#d9f5ea;
+  --bar:#0ea5e9;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#eaf2fb; --mut:#93a6bd; --line:#20304a;
+    --bg:#0a1526; --card:#0f2036; --card2:#132844;
+    --sky:#38bdf8; --sky-d:#7dd3fc; --skyw:#0d2c48;
+    --gold:#f0c07a; --goldw:#2a2012;
+    --ok:#34d399; --okw:#0e2f26;
+  }
+}
+:root[data-theme="light"]{
+  --ink:#0f2440; --mut:#5b7089; --line:#dbe4ee; --bg:#eef4fb; --card:#ffffff; --card2:#f6f9fd;
+  --sky:#0ea5e9; --sky-d:#0284c7; --skyw:#e0f2fe; --gold:#c8862f; --goldw:#fdf3e3; --ok:#0f9d6b; --okw:#d9f5ea;
+}
+:root[data-theme="dark"]{
+  --ink:#eaf2fb; --mut:#93a6bd; --line:#20304a; --bg:#0a1526; --card:#0f2036; --card2:#132844;
+  --sky:#38bdf8; --sky-d:#7dd3fc; --skyw:#0d2c48; --gold:#f0c07a; --goldw:#2a2012; --ok:#34d399; --okw:#0e2f26;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:'Segoe UI',Tahoma,'Noto Kufi Arabic',system-ui,sans-serif;line-height:1.6;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding:22px 16px 60px}
+/* header */
+.head{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.mark{flex:none;width:52px;height:52px;border-radius:14px;background:linear-gradient(160deg,#0284c7,#38bdf8);display:flex;align-items:center;justify-content:center}
+h1{font-size:26px;font-weight:800;letter-spacing:-.3px;text-wrap:balance}
+.sub{color:var(--mut);font-size:13.5px;margin-top:2px}
+/* overall progress */
+.overall{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 12px;margin-top:14px}
+.pbar{height:12px;border-radius:99px;background:var(--line);overflow:hidden}
+.pbar>span{display:block;height:100%;width:0;background:linear-gradient(90deg,#0284c7,#38bdf8);border-radius:99px;transition:width .4s cubic-bezier(.2,.8,.3,1)}
+.pmeta{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.pmeta b{font-size:15px}
+.pmeta .pct{font-size:22px;font-weight:800;color:var(--sky-d);font-variant-numeric:tabular-nums}
+.reset{background:none;border:1px solid var(--line);color:var(--mut);font:inherit;font-size:12px;padding:5px 12px;border-radius:9px;cursor:pointer}
+.reset:hover{border-color:var(--sky)}
+.share{background:var(--sky-d);border:none;color:#fff;font:inherit;font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:9px;cursor:pointer}
+.share:active{transform:scale(.97)}
+.vbanner{display:none;background:var(--goldw);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;font-size:12.5px;color:var(--ink);margin-bottom:12px;line-height:1.7}
+.vbanner b{color:var(--gold)}
+body.viewer .item{cursor:default}
+body.viewer .reset,body.viewer .share{display:none}
+body.viewer .vbanner{display:block}
+#toast{position:fixed;bottom:22px;right:50%;transform:translateX(50%);background:var(--ink);color:var(--bg);padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;opacity:0;transition:.3s;pointer-events:none;z-index:20;white-space:nowrap}
+#toast.on{opacity:1}
+/* phase */
+.phase{background:var(--card);border:1px solid var(--line);border-radius:18px;margin-top:16px;overflow:hidden}
+.ph-head{display:flex;align-items:center;gap:12px;padding:16px 18px;background:var(--card2);border-bottom:1px solid var(--line)}
+.ph-num{flex:none;width:30px;height:30px;border-radius:9px;background:var(--skyw);color:var(--sky-d);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px;font-variant-numeric:tabular-nums}
+.ph-head h2{font-size:16.5px;font-weight:800;flex:1;text-wrap:balance}
+.ph-count{font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ph-body{padding:6px 18px 14px}
+/* item */
+.item{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer;align-items:start}
+.item:last-child{border-bottom:none}
+.box{width:24px;height:24px;border:2px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;transition:.15s;margin-top:1px}
+.box svg{width:14px;height:14px;opacity:0;transform:scale(.5);transition:.15s}
+.item.done .box{background:var(--ok);border-color:var(--ok)}
+.item.done .box svg{opacity:1;transform:scale(1)}
+.it-title{font-size:14.5px;font-weight:700;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.item.done .it-title{color:var(--mut);text-decoration:line-through;text-decoration-color:var(--line)}
+.tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;text-decoration:none;letter-spacing:.2px}
+.t-you{background:var(--skyw);color:var(--sky-d)}
+.t-law{background:var(--goldw);color:var(--gold)}
+.t-dev{background:var(--okw);color:var(--ok)}
+.t-prov{background:var(--line);color:var(--mut)}
+.done-crit{font-size:12.5px;color:var(--mut);margin-top:3px}
+.done-crit b{color:var(--ink);font-weight:700}
+.note{background:var(--skyw);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--ink);margin-top:16px;line-height:1.8}
+.note b{color:var(--sky-d)}
+.foot{text-align:center;color:var(--mut);font-size:11.5px;margin-top:26px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;font-size:11px;color:var(--mut)}
+.legend .tag{cursor:default}
+</style>
+
+<div class="wrap">
+  <div class="head">
+    <div class="mark">
+      <svg width="34" height="34" viewBox="0 0 512 512" aria-hidden="true"><g transform="translate(96,70) scale(0.62)"><g transform="rotate(9 256 256)"><path fill="#fff" d="M96.18 22.49C264.6 98.36 403.1 214.8 40.11 270.5 153 268 191.6 291.1 64.12 382.6c230.18-128 331.68-189 318.98 106.9 30.5-54.4 114.6-241 36.4-268.3 6.2-7.4 15.5-19.4 22.1-31.9 13.1-5.7 22.6-13.6 30.3-23.7-8.7-2-16-2.5-22.8-2.3-.2-2.8-.8-5.5-2.1-7.9-8.7-16.5-48.1-13.7-62.4-12.1 4.7-81-226.8-117.09-288.42-120.81z"/></g></g></svg>
+    </div>
+    <div>
+      <h1>خطة إطلاق طاير</h1>
+      <div class="sub">قائمة تنفيذية مرتّبة — علّم على كل خطوة تخلص، ويُحفظ تقدّمك تلقائيًا على جهازك</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="tag t-you">أنت</span><span class="tag t-law">المحامي</span><span class="tag t-dev">المطوّر</span><span class="tag t-prov">المزوّد</span>
+  </div>
+
+  <div class="vbanner">👀 <b>عرض للقراءة فقط</b> — أنت تشاهد لقطة من تقدّم فريق طاير في خطة الإطلاق.</div>
+
+  <div class="overall">
+    <div class="pmeta">
+      <b>الجاهزية الإجمالية للإطلاق</b>
+      <span class="pct" id="pct">0%</span>
+    </div>
+    <div class="pbar"><span id="bar"></span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px">
+      <span class="sub" id="count">0 من 0 خطوة</span>
+      <div style="display:flex;gap:8px">
+        <button class="reset" id="reset">إعادة التعيين</button>
+        <button class="share" id="share">📤 شارك تقدّمي</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="phases"></div>
+
+  <div class="note">
+    <b>ابدأ بهذي الآن (المسار الحرج):</b> السجل التجاري ← ترخيص وسيط الشحن (يأخذ وقتًا فابدأه بدري) ← التعاقد مع ميسر/تاب. بالتوازي: جهّز قائمة الناقلين، وسلّم كراسة المتطلبات للمطوّر. باقي الخطوات تعتمد على اكتمال هذي.
+  </div>
+  <div class="note" style="background:var(--goldw)">
+    <b style="color:var(--gold)">تنبيه:</b> النقاط القانونية (الترخيص، حماية البيانات، الدفع) للاعتماد النهائي من محاميك ومزوّد الدفع المرخّص — هذي خطة تنفيذية مو استشارة قانونية.
+  </div>
+
+  <div class="foot">طاير — منصة الشحن التشاركي · نسخة خطة الإطلاق 1.0</div>
+</div>
+<div id="toast"></div>
+
+<script>
+const PHASES=[
+  {t:"التأسيس النظامي", items:[
+    ["السجل التجاري بنشاط مناسب","you","<b>جاهز:</b> سجل تجاري ساري بنشاط «منصات إلكترونية / خدمات لوجستية»."],
+    ["ترخيص وسيط الشحن من هيئة النقل (TGA)","law","<b>جاهز:</b> تقديم الطلب واستيفاء متطلبات وسيط الشحن — ابدأه مبكرًا لأنه يأخذ وقتًا."],
+    ["اعتماد الشروط والسياسات داخل التطبيق","law","<b>جاهز:</b> محاميك راجع نص «الأحكام والسياسات» كما يظهر داخل التطبيق واعتمده."],
+    ["التسجيل في منصة معروف","you","<b>جاهز:</b> توثيق المتجر في معروف (يعزّز الثقة ومطلوب للمتاجر)."],
+    ["تسجيل ضريبة القيمة المضافة والفوترة (ZATCA)","you","<b>جاهز:</b> رقم ضريبي وفوترة إلكترونية معتمدة."],
+    ["حماية البيانات (PDPL): مسؤول بيانات + تحقق سدايا","law","<b>جاهز:</b> تعيين مسؤول حماية بيانات والتحقق من متطلبات التسجيل في سدايا."],
+  ]},
+  {t:"الحسابات والمزوّدون", items:[
+    ["حساب مطوّر Apple (منظمة) + رقم D‑U‑N‑S","you","<b>جاهز:</b> حساب Apple Developer باسم الشركة مفعّل."],
+    ["حساب Google Play (منظمة)","you","<b>جاهز:</b> حساب Play Console مفعّل وموثّق."],
+    ["التعاقد مع ميسر/تاب (دفع + حجز + تحويلات للناقلين)","prov","<b>جاهز:</b> عقد موقّع، منتج المنصات مفعّل، وبيئة اختبار (Sandbox) متاحة."],
+    ["مزود رسائل SMS + اسم مرسل «TAYER»","prov","<b>جاهز:</b> حساب Unifonic/Msegat واعتماد اسم المرسل لرموز التحقق."],
+    ["مزود خرائط بمفتاح إنتاجي","prov","<b>جاهز:</b> مفتاح خرائط إنتاجي مربوط ومحدود الاستخدام بنطاقك."],
+    ["استضافة البيانات داخل المملكة","dev","<b>جاهز:</b> تحديد إقامة البيانات (Data Residency) داخل السعودية للامتثال."],
+  ]},
+  {t:"البناء التقني", items:[
+    ["كراسة المتطلبات للمطوّر (من النموذج الحالي)","you","<b>جاهز:</b> مستند يصف كل الشاشات والمنطق مأخوذ من النموذج التجريبي."],
+    ["بناء تطبيق Flutter (مرسل / ناقل / متجر)","dev","<b>جاهز:</b> تطبيق iOS+Android يغطي رحلة المستخدم كاملة."],
+    ["الخلفية وقاعدة البيانات داخل السعودية","dev","<b>جاهز:</b> Backend + قاعدة بيانات آمنة ومشفّرة داخل المملكة."],
+    ["ربط الدفع والمحفظة والتسوية والتحويلات","dev","<b>جاهز:</b> حجز المبلغ حتى التسليم + خصم العمولة + صرف مستحقات الناقل."],
+    ["ربط رموز التحقق SMS الحقيقية","dev","<b>جاهز:</b> OTP حقيقي يصل فعليًا عبر المزوّد."],
+    ["لوحة الإدارة والدعم (نسخة إنتاجية)","dev","<b>جاهز:</b> موافقة الناقلين، الشحنات، المدفوعات، البلاغات، الدعم."],
+    ["بناء الميزات الناقصة: الإلغاء، الاسترداد، الشكاوى بمهلها","dev","<b>جاهز:</b> واجهات تنفّذ بنود القوانين (رسوم الإلغاء، الاسترداد، مهل الشكاوى)."],
+  ]},
+  {t:"ما قبل الإطلاق (التجهيز)", items:[
+    ["اختبار شامل (QA) لسيناريوهات الدفع والاسترداد","dev","<b>جاهز:</b> اجتياز كل السيناريوهات بما فيها الكاش والاسترداد والنزاع."],
+    ["تجهيز الناقلين أولًا (30–50 ناقل موثّق)","you","<b>جاهز:</b> قائمة ناقلين موثّقين جاهزين قبل دعوة المرسلين."],
+    ["صفحات المتجرين: أيقونة، صور، وصف (جاهزة عندك)","you","<b>جاهز:</b> رفع الأيقونة ولقطات المتجر والوصف على App Store وGoogle Play."],
+    ["روابط سياسة الخصوصية والدعم (مطلوبة للمتاجر)","you","<b>جاهز:</b> صفحات عامة للخصوصية والدعم يصلها المتجر والمستخدم."],
+    ["إطلاق تجريبي مغلق في مسار/مدينة واحدة","you","<b>جاهز:</b> TestFlight + مسار Google مغلق على 50–100 مستخدم."],
+    ["قياس المؤشرات وإصلاح الملاحظات","you","<b>جاهز:</b> نسبة إكمال الشحنات ووقت القبول والنزاعات ضمن المستهدف."],
+  ]},
+  {t:"الإطلاق الرسمي والنمو", items:[
+    ["مراجعة المتاجر والنشر العام","you","<b>جاهز:</b> التطبيق منشور على App Store وGoogle Play."],
+    ["تفعيل التسويق (البوستر والسوشال والحملات)","you","<b>جاهز:</b> حسابات ومحتوى وحملة إطلاق جاهزة."],
+    ["تفعيل الولاء: طاير بلس + النقاط","you","<b>جاهز:</b> الاشتراك والنقاط مفعّلة (الآمنة ماليًا) دون دعوات نقدية."],
+    ["مراقبة العمليات والدعم أول أسبوعين","you","<b>جاهز:</b> متابعة يومية للطلبات والنزاعات والدعم عن قرب."],
+    ["التوسع التدريجي (مدن ومتاجر جديدة)","you","<b>جاهز:</b> خطة توسّع مسار بعد مسار حسب توفّر الناقلين."],
+  ]},
+];
+const TAG={you:["أنت","t-you"],law:["المحامي","t-law"],dev:["المطوّر","t-dev"],prov:["المزوّد","t-prov"]};
+const KEY="tayer_launch_v1";
+let state={};
+// وضع العرض: رابط لقطة يحمل التقدّم (#p=0.3.5)
+const vm=(location.hash.match(/p=([^&]*)/)||[])[1];
+const VIEWER=vm!=null;
+if(VIEWER){
+  document.body.classList.add('viewer');
+  decodeURIComponent(vm).split('.').filter(x=>x!=='').forEach(i=>{state['i'+i]=true;});
+}else{
+  try{state=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){state={}}
+}
+const check='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+const root=document.getElementById('phases');
+let idc=0;
+PHASES.forEach((ph,pi)=>{
+  const sec=document.createElement('div');sec.className='phase';
+  const ids=[];
+  let body='';
+  ph.items.forEach(it=>{
+    const id='i'+(idc++);ids.push(id);
+    const[label,who,crit]=it;const[tname,tcls]=TAG[who];
+    const done=state[id]?'done':'';
+    body+=`<div class="item ${done}" data-id="${id}">
+      <div class="box">${check}</div>
+      <div><div class="it-title">${label} <span class="tag ${tcls}">${tname}</span></div><div class="done-crit">${crit}</div></div>
+    </div>`;
+  });
+  sec.innerHTML=`<div class="ph-head"><div class="ph-num">${pi+1}</div><h2>${ph.t}</h2><span class="ph-count" data-count="${ids.join(',')}"></span></div><div class="ph-body">${body}</div>`;
+  root.appendChild(sec);
+});
+function refresh(){
+  let total=0,done=0;
+  document.querySelectorAll('.item').forEach(el=>{total++;if(el.classList.contains('done'))done++;});
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('pct').textContent=pct+'%';
+  document.getElementById('bar').style.width=pct+'%';
+  document.getElementById('count').textContent=done+' من '+total+' خطوة';
+  document.querySelectorAll('.ph-count').forEach(c=>{
+    const ids=c.dataset.count.split(',');
+    const d=ids.filter(i=>state[i]).length;
+    c.textContent=d+' / '+ids.length;
+  });
+}
+if(!VIEWER){
+  root.addEventListener('click',e=>{
+    const it=e.target.closest('.item');if(!it)return;
+    const id=it.dataset.id;state[id]=!state[id];
+    it.classList.toggle('done',!!state[id]);
+    try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+    refresh();
+  });
+  document.getElementById('reset').addEventListener('click',()=>{
+    if(!confirm('مسح كل العلامات؟'))return;
+    state={};try{localStorage.removeItem(KEY)}catch(e){}
+    document.querySelectorAll('.item').forEach(el=>el.classList.remove('done'));
+    refresh();
+  });
+  document.getElementById('share').addEventListener('click',()=>{
+    const idx=[];document.querySelectorAll('.item').forEach(el=>{if(el.classList.contains('done'))idx.push(el.dataset.id.slice(1));});
+    const url=location.origin+location.pathname+'#p='+encodeURIComponent(idx.join('.'));
+    const done=idx.length,total=document.querySelectorAll('.item').length;
+    const msg='📋 تقدّم إطلاق طاير: '+Math.round(done/total*100)+'% ('+done+'/'+total+')\n'+url;
+    if(navigator.share){navigator.share({title:'خطة إطلاق طاير',text:'تقدّم إطلاق طاير',url}).catch(()=>{});}
+    else if(navigator.clipboard){navigator.clipboard.writeText(url).then(()=>toast('✅ نُسخ رابط تقدّمك — أرسله لمن تشاء')).catch(()=>toast(url));}
+    else{prompt('انسخ الرابط:',url);}
+  });
+}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('on'),2800);}
+refresh();
+</script>
