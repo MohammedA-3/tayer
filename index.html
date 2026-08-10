@@ -592,8 +592,19 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:2px
 <!-- ======== TERMS & POLICIES ======== -->
 <div class="screen" id="sc-terms">
   <div class="hd"><div class="hd-row"><h1><button class="back" onclick="termsBack()">→</button> الأحكام والسياسات</h1></div>
-    <div class="sub" style="margin-top:4px">نسخة تجريبية · محدثة 10 أغسطس 2026</div></div>
+    <div class="sub" style="margin-top:4px">الإصدار 1.0 · محدثة 10 أغسطس 2026</div></div>
   <div class="wrap">
+
+    <div class="card" style="background:var(--sky-l);border:1px solid #bae6fd">
+      <div class="sec-t" style="margin-top:0">⭐ أهم النقاط باختصار</div>
+      <div class="txn"><div>💰 عمولة المنصة</div><span class="mut">15% · الناقل يستلم 85%</span></div>
+      <div class="txn"><div>🛡️ حد الحماية</div><span class="mut">1,000 ﷼ فردي · 5,000 ﷼ تجاري</span></div>
+      <div class="txn"><div>⚖️ التسعير</div><span class="mut">الأكبر بين الوزن الفعلي والحجمي</span></div>
+      <div class="txn"><div>💳 الدفع</div><span class="mut">بطاقة محجوزة حتى التسليم · أو كاش عند الاستلام</span></div>
+      <div class="txn"><div>🔐 الاستلام والتسليم</div><span class="mut">يُوثّق برمز QR من الطرفين</span></div>
+      <div class="txn" style="border:none"><div>🚫 ممنوع</div><span class="mut">ممنوعات ومواد خطرة (التفاصيل بالأسفل)</span></div>
+    </div>
+    <div class="mut" style="text-align:center;margin-bottom:12px">اضغط أي قسم لقراءة تفاصيله 👇</div>
 
     <details class="pol" open><summary>📜 شروط الاستخدام</summary><div class="body">
       <details class="cl"><summary>تمهيد ونطاق التطبيق</summary><p>تنظم هذه الأحكام استعمال تطبيق وموقع «طاير» والخدمات المرتبطة بإنشاء الشحنات والرحلات الخاصة، والمطابقة والتتبع والدفع والدعم. وبإنشاء الحساب أو تأكيد الطلب أو الاستمرار في خاصية بعد إتاحة الشروط، يقر المستخدم بأنه قرأها وفهمها وقبلها إلكترونيًا. وتشكل هذه الأحكام مع سياسة الشحن والخصوصية وسجل الطلب والعرض النهائي كامل الاتفاق بشأن الطلب، ويقدم الخاص المثبت في سجل الطلب على النص العام في حدوده.</p></details>
@@ -1006,7 +1017,7 @@ function renderHome(){
     </div>
     <div class="card" style="display:flex;gap:10px;align-items:center;background:#fff7ed;border:1px solid #fed7aa">
       <span style="font-size:20px">🛡️</span>
-      <div style="font-size:12.5px;color:#9a3412;line-height:1.6"><b>نصيحة أمان:</b> خلّ التواصل والدفع داخل التطبيق دايم.</div>
+      <div style="font-size:12.5px;color:#9a3412;line-height:1.6"><b>نصيحة أمان:</b> خلّ التواصل داخل التطبيق، ولا تحوّل مبالغ خارج الوسائل المعتمدة لأي طرف.</div>
     </div>`;
   } else {
     const used=usedWeight(), maxw=myTrip?myTrip.maxw:40, pct=Math.min(100,Math.round(used/maxw*100));
@@ -1059,6 +1070,10 @@ function renderHome(){
       <div style="font-size:12.5px;color:#075985;line-height:1.7"><b>زوّد أرباحك:</b> أضف رحلاتك القادمة بدري — الشحنات تنحجز قبل الرحلة بيوم أو يومين غالبًا.</div>
     </div>`;
   }
+  h.innerHTML += `<div style="text-align:center;padding:16px 0 4px" onclick="openTerms('home')">
+    <span style="font-size:12.5px;color:var(--mut);cursor:pointer">📄 الأحكام والسياسات العامة · سياسة الخصوصية</span>
+    <div class="mut" style="font-size:11px;margin-top:3px">طاير — منصة الشحن التشاركي · الإصدار التجريبي 1.0</div>
+  </div>`;
 }
 function shipCard(s){
   const chip = `<span class="chip ${SCHIP[s.status]}">${s.status===0?'🔎 '+STATUS[0]:STATUS[s.status]}</span>`;
