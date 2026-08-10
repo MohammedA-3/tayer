@@ -1382,7 +1382,7 @@ function drawLeaflet(el,s){
   el.innerHTML='';
   if(_map){try{_map.remove()}catch(e){}_map=null;}
   _map=L.map(el,{zoomControl:false,attributionControl:false,dragging:true,scrollWheelZoom:false});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(_map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(_map);
   L.polyline([a,b],{color:'#94a3b8',weight:3,dashArray:'4 10'}).addTo(_map);
   L.polyline([a,[mx,my]],{color:'#0ea5e9',weight:5}).addTo(_map);
   L.marker(a,{icon:L.divIcon({html:'<div style="background:#0284c7;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',className:'',iconSize:[16,16],iconAnchor:[8,8]})}).addTo(_map).bindTooltip(s.from,{permanent:true,direction:'top',className:'maptip'});
