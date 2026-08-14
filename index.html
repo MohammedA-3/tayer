@@ -253,7 +253,7 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
   <div class="hd"><div class="hd-row"><h1><button class="back" onclick="backToSplash()">→</button> تسجيل الدخول</h1></div></div>
   <div class="wrap">
     <div class="card" style="text-align:center">
-      <div style="font-size:40px;margin-bottom:4px" id="lg-icon">📦</div>
+      <div id="lg-icon" style="display:none"></div>
       <b id="lg-role" style="font-size:15px">حساب مرسل</b>
       <div class="mut" style="margin-top:4px">أدخل رقم جوالك وبنرسل لك رمز تحقق برسالة SMS</div>
     </div>
@@ -267,7 +267,7 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
         <input type="checkbox" id="lg-terms" style="width:auto;margin:0"> أوافق على <a onclick="openTerms('login')" style="color:var(--sky-d);font-weight:700;cursor:pointer">الأحكام والسياسات</a>
       </label>
     </div>
-    <button class="btn" onclick="sendOtp()">📩 أرسل رمز التحقق</button>
+    <button class="btn" onclick="sendOtp()">أرسل رمز التحقق</button>
   </div>
 </div>
 
@@ -899,6 +899,14 @@ function approveDemo(){
 
 /* ================= nav ================= */
 function setRole(r){
+  /* الناقل والطلبات الخاصة: توثيق الرقم من البداية — المرسل يتصفح أولاً */
+  if((r==='carrier'||r==='store') && !auth.loggedIn){
+    pendingAction=()=>setRole(r);
+    document.getElementById('lg-icon').textContent = r==='carrier'?'🚗':'🚚';
+    document.getElementById('lg-role').textContent = r==='carrier'?'تسجيل ناقل — وثّق رقمك أولاً':'طلبات خاصة — وثّق رقمك أولاً';
+    openGate('login');
+    return;
+  }
   role=r;
   ['sender','carrier','store'].forEach(x=>document.getElementById('rs-'+x).classList.toggle('act',x===r));
   document.getElementById('hd-sub').textContent = r==='sender'?'وش تبي ترسل اليوم؟': r==='carrier'?'رحلتك الجاية تربّحك':'جهّز طلبك الخاص';
