@@ -214,6 +214,19 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
 @keyframes up{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
 .modal h3{font-size:17px;margin-bottom:4px}
 .grab{width:44px;height:5px;background:var(--line);border-radius:99px;margin:0 auto 14px}
+/* ==== city picker (region → city drilldown) ==== */
+.city-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.city-head h3{flex:1;text-align:center;margin:0;font-size:19px}
+.city-back,.city-x{border:none;background:var(--bg);width:36px;height:36px;border-radius:12px;font-size:20px;line-height:1;cursor:pointer;color:var(--ink);flex:none}
+.city-search{width:100%;margin-bottom:12px}
+.city-list{display:flex;flex-direction:column;gap:8px;max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.city-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--card);font-size:17px;font-weight:700;cursor:pointer;text-align:right;color:var(--ink);width:100%}
+.city-row:active{background:var(--sky-l);border-color:var(--sky)}
+.city-row .city-reg,.city-row .city-count{color:var(--mut);font-weight:500;font-size:13px;white-space:nowrap}
+.city-empty{text-align:center;color:var(--mut);padding:34px 0}
+.pickbtn{display:flex;justify-content:space-between;align-items:center;width:100%;padding:15px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);font-size:17px;font-weight:700;color:var(--ink);cursor:pointer;text-align:right}
+.pickbtn .ph{color:var(--mut);font-weight:500}
+.pickbtn .chev{color:var(--mut);font-size:15px}
 /* stars */
 .stars{display:flex;gap:6px;justify-content:center;font-size:34px;cursor:pointer;margin:12px 0}
 .stars span{color:#cbd5e1;transition:.1s}
@@ -401,8 +414,8 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
   <div class="wrap">
     <div class="card">
       <div class="row">
-        <div><label>من</label><select id="sr-from" onchange="recalcStore()"><option>الرياض</option><option>جدة</option><option>مكة</option><option>المدينة</option><option>الدمام</option><option>القصيم</option><option>أبها</option><option>الطائف</option></select></div>
-        <div><label>إلى</label><select id="sr-to" onchange="recalcStore()"><option>جدة</option><option>الرياض</option><option>مكة</option><option>المدينة</option><option>الدمام</option><option>القصيم</option><option>أبها</option><option>الطائف</option></select></div>
+        <div><label>من</label><input type="hidden" id="sr-from" value="الرياض"><button type="button" class="pickbtn" onclick="pickField('sr-from','recalcStore','sr-to')"><span id="sr-from-t">الرياض</span><span class="chev">تغيير ›</span></button></div>
+        <div><label>إلى</label><input type="hidden" id="sr-to" value="جدة"><button type="button" class="pickbtn" onclick="pickField('sr-to','recalcStore','sr-from')"><span id="sr-to-t">جدة</span><span class="chev">تغيير ›</span></button></div>
       </div>
       <label>حجم الشحنة</label>
       <select id="sr-tier" onchange="recalcStore()"></select>
@@ -455,8 +468,8 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
   <div class="wrap">
     <div class="card">
       <div class="row">
-        <div><label>من</label><select id="t-from" onchange="recalcTrip()"><option>الرياض</option><option>جدة</option><option>مكة</option><option>المدينة</option><option>الدمام</option><option>القصيم</option><option>أبها</option><option>الطائف</option></select></div>
-        <div><label>إلى</label><select id="t-to" onchange="recalcTrip()"><option>جدة</option><option>الرياض</option><option>مكة</option><option>المدينة</option><option>الدمام</option><option>القصيم</option><option>أبها</option><option>الطائف</option></select></div>
+        <div><label>من</label><input type="hidden" id="t-from" value="الرياض"><button type="button" class="pickbtn" onclick="pickField('t-from','recalcTrip','t-to')"><span id="t-from-t">الرياض</span><span class="chev">تغيير ›</span></button></div>
+        <div><label>إلى</label><input type="hidden" id="t-to" value="جدة"><button type="button" class="pickbtn" onclick="pickField('t-to','recalcTrip','t-from')"><span id="t-to-t">جدة</span><span class="chev">تغيير ›</span></button></div>
       </div>
       <div class="row">
         <div><label>تاريخ المغادرة</label><input id="t-date" type="date" value="2026-08-06"></div>
@@ -690,6 +703,19 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
   </div>
 </div>
 
+<div class="modal-bg" id="m-city" onclick="if(event.target===this)closeCity()">
+  <div class="modal">
+    <div class="grab"></div>
+    <div class="city-head">
+      <button id="city-back" class="city-back" onclick="cityBack()">‹</button>
+      <h3 id="city-title">اختر المنطقة</h3>
+      <button class="city-x" onclick="closeCity()">✕</button>
+    </div>
+    <input id="city-q" class="city-search" placeholder="🔎 ابحث عن مدينة…" oninput="citySearch(this.value)" autocomplete="off">
+    <div id="city-list" class="city-list"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div>
 
@@ -820,6 +846,50 @@ function cityOptions(exclude,selected){
       .map(c=>`<option ${c===selected?'selected':''}>${c}</option>`).join('');
     return o?`<optgroup label="${r}">${o}</optgroup>`:'';
   }).join('');
+}
+/* ==== قائمة اختيار المدينة المتدرّجة (منطقة ← مدينة) مثل مرسول/هنقر ==== */
+let _cityCB=null,_cityExclude=[],_cityRegion=null;
+function openCityPicker(cb,exclude){
+  _cityCB=cb;_cityExclude=exclude||[];_cityRegion=null;
+  const q=document.getElementById('city-q'); if(q)q.value='';
+  renderCityList('');
+  document.getElementById('m-city').classList.add('on');
+  setTimeout(()=>{const el=document.getElementById('city-q');if(el)el.focus();},120);
+}
+function closeCity(){document.getElementById('m-city').classList.remove('on');}
+/* ربط حقل نموذج (input مخفي + زر) بالنافذة */
+function pickField(id,recalc,exclId){
+  const ex=exclId&&document.getElementById(exclId)?[document.getElementById(exclId).value]:[];
+  openCityPicker(function(c){
+    document.getElementById(id).value=c;
+    const t=document.getElementById(id+'-t'); if(t)t.textContent=c;
+    if(recalc&&typeof window[recalc]==='function')window[recalc]();
+  },ex);
+}
+function cityBack(){ if(_cityRegion){_cityRegion=null;const q=document.getElementById('city-q');if(q)q.value='';renderCityList('');} else closeCity(); }
+function citySearch(v){ renderCityList((v||'').trim()); }
+function cityOpenRegion(r){ _cityRegion=r; const q=document.getElementById('city-q');if(q)q.value=''; renderCityList(''); }
+function cityChoose(c){ closeCity(); if(_cityCB)_cityCB(c); }
+function renderCityList(q){
+  const L=document.getElementById('city-list'),back=document.getElementById('city-back'),T=document.getElementById('city-title');
+  if(q){
+    back.style.visibility='hidden';T.textContent='نتائج البحث';
+    const res=[];
+    REGIONS.forEach(r=>Object.keys(KSA[r]).forEach(c=>{ if(_cityExclude.indexOf(c)<0 && c.indexOf(q)>=0) res.push([c,r]); }));
+    L.innerHTML=res.length?res.map(([c,r])=>`<button class="city-row" onclick="cityChoose('${c}')"><span>${c}</span><span class="city-reg">${r}</span></button>`).join(''):`<div class="city-empty">ما فيه مدينة بهذا الاسم</div>`;
+    return;
+  }
+  if(!_cityRegion){
+    back.style.visibility='hidden';T.textContent='اختر المنطقة';
+    L.innerHTML=REGIONS.map(r=>{
+      const n=Object.keys(KSA[r]).filter(c=>_cityExclude.indexOf(c)<0).length;
+      return `<button class="city-row" onclick="cityOpenRegion('${r}')"><span>${r}</span><span class="city-count">${n} مدينة ›</span></button>`;
+    }).join('');
+  }else{
+    back.style.visibility='visible';T.textContent=_cityRegion;
+    const cs=Object.keys(KSA[_cityRegion]).filter(c=>_cityExclude.indexOf(c)<0);
+    L.innerHTML=cs.map(c=>`<button class="city-row" onclick="cityChoose('${c}')"><span>${c}</span></button>`).join('');
+  }
 }
 function haversine(a,b){
   const R=6371, toR=x=>x*Math.PI/180;
@@ -1205,13 +1275,13 @@ function renderWiz(){
       <button class="opt on" style="border-style:dashed" onclick="wizGeo()"><span>📍</span><span>استخدم موقعي الحالي<span class="sub2">نحدد مدينتك تلقائيًا</span></span></button>
       <div class="sec-t" style="margin-top:16px">أو اختر المدينة</div>
       <div class="citygrid">${MAINCITIES.map(c=>`<button class="opt ${wz.from===c?'on':''}" onclick="wizPickFrom('${c}')">${c}</button>`).join('')}</div>
-      <select onchange="if(this.value)wizPickFrom(this.value)" style="margin-top:4px"><option value="">كل المدن حسب المنطقة…</option>${cityOptions()}</select>`;
+      <button class="pickbtn" style="margin-top:8px" onclick="openCityPicker(wizPickFrom)"><span class="ph">تصفّح كل المدن حسب المنطقة</span><span class="chev">تصفّح ›</span></button>`;
   }
   else if(wz.step===2){
     T.textContent='وين رايحة الشحنة؟';SB.textContent='الاستلام من '+wz.from;
     if(wz.pickTo){
       B.innerHTML=`<div class="citygrid">${MAINCITIES.filter(c=>c!==wz.from).map(c=>`<button class="opt ${wz.to===c?'on':''}" onclick="wizPickTo('${c}')">${c}</button>`).join('')}</div>
-      <select onchange="if(this.value)wizPickTo(this.value)"><option value="">كل المدن حسب المنطقة…</option>${cityOptions([wz.from])}</select>`;
+      <button class="pickbtn" onclick="openCityPicker(wizPickTo,['${wz.from}'])"><span class="ph">تصفّح كل المدن حسب المنطقة</span><span class="chev">تصفّح ›</span></button>`;
     }else{
       B.innerHTML=`
         <button class="opt ${wz.mode==='inside'?'on':''}" onclick="wizMode('inside')"><span>🏙️</span><span>داخل ${wz.from}<span class="sub2">توصيل داخل نفس المدينة</span></span><span class="tick">✓</span></button>
@@ -1472,9 +1542,10 @@ function vehIcon(car){
 function tripProgress(s){return s.status>=4?1 : s.status===3?0.62 : s.status===2?0.18 : s.status===1?0.05 : 0;}
 /* تعبئة كل قوائم المدن */
 function fillCities(){
-  const opts=cityOptions();
-  [['f-from','الرياض'],['f-to','جدة'],['t-from','الرياض'],['t-to','جدة'],['sr-from','الرياض'],['sr-to','جدة']].forEach(([id,def])=>{
-    const el=document.getElementById(id); if(el){el.innerHTML=opts; el.value=def;}
+  [['t-from','الرياض'],['t-to','جدة'],['sr-from','الرياض'],['sr-to','جدة']].forEach(([id,def])=>{
+    const el=document.getElementById(id); if(!el)return;
+    if(el.tagName==='SELECT'){el.innerHTML=cityOptions();el.value=def;}
+    else{ el.value=def; const t=document.getElementById(id+'-t'); if(t)t.textContent=def; }
   });
 }
 let _map=null,_leafletState='none'; // none|loading|ready
