@@ -249,30 +249,31 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
       <linearGradient id="gTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe6ff"/><stop offset="1" stop-color="#9fccff"/></linearGradient>
       <linearGradient id="gFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f9bff"/><stop offset="1" stop-color="#1272d6"/></linearGradient>
       <linearGradient id="gRight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f63bd"/><stop offset="1" stop-color="#0a4d94"/></linearGradient>
-      <linearGradient id="gStreak" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#38bdf8" stop-opacity="0"/><stop offset=".65" stop-color="#7cc7ff"/><stop offset="1" stop-color="#eaf5ff"/></linearGradient>
+      <linearGradient id="gStreakB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#38bdf8" stop-opacity="0"/><stop offset=".65" stop-color="#7cc7ff"/><stop offset="1" stop-color="#eaf5ff"/></linearGradient>
+      <linearGradient id="gStreakP" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7c3aed" stop-opacity="0"/><stop offset=".6" stop-color="#8b5cf6"/><stop offset="1" stop-color="#c4b5fd"/></linearGradient>
     </defs>
     <g class="streaks">
-      <rect x="10" y="150" width="120" height="9" rx="4.5" fill="url(#gStreak)" opacity=".9"/>
-      <rect x="34" y="172" width="104" height="8" rx="4" fill="url(#gStreak)" opacity=".6"/>
-      <rect x="2" y="194" width="126" height="7" rx="3.5" fill="url(#gStreak)" opacity=".4"/>
+      <rect x="6" y="146" width="126" height="9" rx="4.5" fill="url(#gStreakP)" opacity=".85"/>
+      <rect x="24" y="166" width="116" height="10" rx="5" fill="url(#gStreakB)" opacity=".95"/>
+      <rect x="40" y="187" width="100" height="8" rx="4" fill="url(#gStreakP)" opacity=".7"/>
+      <rect x="2" y="206" width="120" height="7" rx="3.5" fill="url(#gStreakB)" opacity=".5"/>
     </g>
     <g class="box-float">
       <ellipse cx="200" cy="238" rx="82" ry="13" fill="#043a6b" opacity=".26"/>
-      <!-- faces -->
       <polygon points="200,50 280,92 200,134 120,92" fill="url(#gTop)"/>
       <polygon points="120,92 200,134 200,229 120,187" fill="url(#gFront)"/>
       <polygon points="200,134 280,92 280,187 200,229" fill="url(#gRight)"/>
-      <!-- top tape cross -->
+      <!-- paper-plane mark on the right face -->
+      <path d="M268,150 L226,137 L244,153 Z" fill="#f4f9ff"/>
+      <path d="M268,150 L244,153 L226,167 Z" fill="#cfe3f7"/>
+      <!-- top cross tape -->
       <polygon points="168,66.8 248,108.8 232,117.2 152,75.2" fill="#eef6ff" opacity=".97"/>
       <polygon points="232,66.8 248,66.8 168,117.2 152,108.8" fill="#dfeeff" opacity=".9"/>
-      <!-- front tape down the middle crease -->
+      <!-- front center tape crease -->
       <polygon points="184,125.6 200,134 200,229 184,220.6" fill="#f4f9ff"/>
       <polygon points="200,134 216,125.6 216,220.6 200,229" fill="#dcecfb"/>
-      <!-- little folded flap at top-front -->
       <polygon points="184,125.6 216,125.6 210,116 190,116" fill="#ffffff" opacity=".95"/>
-      <!-- edge highlights -->
       <polyline points="120,92 200,134 280,92" fill="none" stroke="#eaf5ff" stroke-width="1.4" opacity=".5"/>
-      <line x1="200" y1="134" x2="200" y2="229" stroke="#083f78" stroke-width="1.2" opacity=".25"/>
     </g>
   </svg></div>
   <h1>طاير</h1>
