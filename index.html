@@ -18,6 +18,7 @@
   --ok:#30b15c; --ok-l:#e4f6ea;
   --warn:#f5a623; --warn-l:#fdf3e0;
   --bad:#e5484d; --bad-l:#fdebec;
+  --ink-sky:#075985; --ink-ok:#1d7a3f; --ink-warn:#92400e; --ink-bad:#c0353a; --read:#334155;
   --r:20px;
 }
 /* ============ الوضع الداكن (Dark Mode) ============ */
@@ -28,6 +29,7 @@ html[data-theme="dark"]{
   --ok:#3ac06a; --ok-l:#123021;
   --warn:#f5b23a; --warn-l:#2f2513;
   --bad:#f2585d; --bad-l:#331b1c;
+  --ink-sky:#8fc7ff; --ink-ok:#6fe0a0; --ink-warn:#f2c98a; --ink-bad:#ff9ea1; --read:#c7d2de;
 }
 html[data-theme="dark"] body{background:#05090d}
 html[data-theme="dark"] .bell,
@@ -57,7 +59,7 @@ html[dir="ltr"] .corner{left:auto;right:14px}
 html[dir="ltr"] .rolecard,html[dir="ltr"] .opt,html[dir="ltr"] .city-row,html[dir="ltr"] .pickbtn,html[dir="ltr"] .setrow .sl{text-align:left}
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'SF Pro AR','Segoe UI',Tahoma,sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:#dfe6ee;display:flex;justify-content:center;min-height:100vh}
-#phone{width:100%;max-width:430px;height:100vh;background:var(--bg);position:relative;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.2);overflow:hidden}
+#phone{width:100%;max-width:430px;height:100vh;background:var(--bg);color:var(--ink);position:relative;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.2);overflow:hidden}
 @media(min-width:500px){
   body{align-items:center;padding:16px 0}
   #phone{height:min(94vh,900px);border-radius:40px;border:8px solid #10222f;box-shadow:0 30px 70px rgba(10,30,50,.4)}
@@ -93,9 +95,9 @@ body{background:#dfe6ee;display:flex;justify-content:center;min-height:100vh}
 .row>*{flex:1}
 .chip{display:inline-block;padding:5px 12px;border-radius:99px;font-size:13px;font-weight:700}
 .chip.blue{background:var(--sky-l);color:var(--sky)}
-.chip.ok{background:var(--ok-l);color:#1d7a3f}
-.chip.warn{background:var(--warn-l);color:#a86a08}
-.chip.bad{background:var(--bad-l);color:#c0353a}
+.chip.ok{background:var(--ok-l);color:var(--ink-ok)}
+.chip.warn{background:var(--warn-l);color:var(--ink-warn)}
+.chip.bad{background:var(--bad-l);color:var(--ink-bad)}
 input,select,textarea{width:100%;padding:15px 16px;border:1.5px solid var(--line);border-radius:14px;font-size:17px;background:#fff;color:var(--ink);margin-bottom:12px;font-family:inherit}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--sky)}
 label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2px 8px}
@@ -195,8 +197,8 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
 .cl>summary::-webkit-details-marker{display:none}
 .cl>summary::before{content:'＋';color:var(--sky);font-weight:800}
 .cl[open]>summary::before{content:'－'}
-.cl p{font-size:12.5px;line-height:1.9;color:#334155;padding:2px 16px 10px}
-.cl.bad p{color:#b91c1c}
+.cl p{font-size:12.5px;line-height:1.9;color:var(--read);padding:2px 16px 10px}
+.cl.bad p{color:var(--ink-bad)}
 .maptip{background:#0f2440;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;padding:2px 8px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .maptip::before{display:none}
 #livemap{z-index:0}
@@ -476,7 +478,7 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
       <textarea id="sr-note" rows="2" placeholder="مثال: بضاعة قابلة للكسر — تحتاج عناية"></textarea>
     </div>
     <div id="sr-est" style="display:none;background:var(--sky-l);border-radius:12px;padding:12px 14px;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12.5px;color:#075985">💡 السعر التقديري حسب الحجم</span><b class="price" id="sr-price" style="font-size:19px">— ﷼</b></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12.5px;color:var(--ink-sky)">💡 السعر التقديري حسب الحجم</span><b class="price" id="sr-price" style="font-size:19px">— ﷼</b></div>
       <div class="mut" id="sr-note2" style="margin-top:4px;font-size:11.5px"></div>
     </div>
     <button class="btn" onclick="submitStoreReq()">🔎 اعرض الناقلين المتاحين</button>
@@ -1718,7 +1720,7 @@ function openTrack(id){
       </div>
       <div class="meta" style="font-size:14px"><span>#${s.id}</span><span>${s.desc}</span><span>${s.w} كجم</span><span class="chip ${cash?'warn':'ok'}" style="font-size:13px">${cash?'كاش':'مدفوع'} ${s.price} ﷼</span></div>
     </div>
-    ${cash&&s.status===1?`<div class="card" style="display:flex;gap:10px;align-items:center;background:var(--warn-l);border:1px solid #fde68a"><span style="font-size:22px">💵</span><div style="font-size:12.5px;color:#92400e;line-height:1.6"><b>جهّز ${s.price} ﷼ كاش</b> — سلّمها للمندوب وقت يستلم شحنتك، وبعدها اعرض له رمز الاستلام.</div></div>`:''}
+    ${cash&&s.status===1?`<div class="card" style="display:flex;gap:10px;align-items:center;background:var(--warn-l);border:1px solid var(--warn)"><span style="font-size:22px">💵</span><div style="font-size:12.5px;color:var(--ink-warn);line-height:1.6"><b>جهّز ${s.price} ﷼ كاش</b> — سلّمها للمندوب وقت يستلم شحنتك، وبعدها اعرض له رمز الاستلام.</div></div>`:''}
     ${s.status>=1?mapPanel(s):''}
     <div class="card">
       <div class="sec-t" style="margin-top:0">مسار الشحنة</div>
@@ -1807,7 +1809,7 @@ function renderTickets(){
         <span class="chip ${t.st==='open'?'warn':'ok'}">${t.st==='open'?'مفتوحة':'تم الرد'}</span>
       </div>
       ${t.reply
-        ?`<div class="mut" style="background:var(--sky-l);border-radius:10px;padding:8px 12px;margin-top:8px;color:#075985">🎧 فريق الدعم: ${t.reply}</div>`
+        ?`<div class="mut" style="background:var(--sky-l);border-radius:10px;padding:8px 12px;margin-top:8px;color:var(--ink-sky)">🎧 فريق الدعم: ${t.reply}</div>`
         :'<div class="mut" style="margin-top:6px">وصلت تذكرتك — بيرد عليك فريق الدعم قريبًا...</div>'}
     </div>`).join('');
 }
