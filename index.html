@@ -244,29 +244,35 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
 
 <!-- ======== SPLASH / ROLE PICK ======== -->
 <div id="splash">
-  <div class="scene"><svg viewBox="0 0 320 210" xmlns="http://www.w3.org/2000/svg">
+  <div class="scene"><svg viewBox="0 0 320 250" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="gFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b9bff"/><stop offset="1" stop-color="#0866c6"/></linearGradient>
-      <linearGradient id="gRight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f6fd0"/><stop offset="1" stop-color="#0a4f97"/></linearGradient>
-      <linearGradient id="gTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe0ff"/><stop offset="1" stop-color="#8ec8ff"/></linearGradient>
-      <linearGradient id="gStreak" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#38bdf8" stop-opacity="0"/><stop offset=".6" stop-color="#7cc7ff"/><stop offset="1" stop-color="#e8f4ff"/></linearGradient>
+      <linearGradient id="gTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe6ff"/><stop offset="1" stop-color="#9fccff"/></linearGradient>
+      <linearGradient id="gFront" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f9bff"/><stop offset="1" stop-color="#1272d6"/></linearGradient>
+      <linearGradient id="gRight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f63bd"/><stop offset="1" stop-color="#0a4d94"/></linearGradient>
+      <linearGradient id="gStreak" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#38bdf8" stop-opacity="0"/><stop offset=".65" stop-color="#7cc7ff"/><stop offset="1" stop-color="#eaf5ff"/></linearGradient>
     </defs>
     <g class="streaks">
-      <polygon points="2,78 128,95 128,107 2,96" fill="url(#gStreak)" opacity=".85"/>
-      <polygon points="18,112 140,120 140,130 18,126" fill="url(#gStreak)" opacity=".6"/>
-      <polygon points="0,140 132,142 132,150 0,152" fill="url(#gStreak)" opacity=".4"/>
+      <rect x="10" y="150" width="120" height="9" rx="4.5" fill="url(#gStreak)" opacity=".9"/>
+      <rect x="34" y="172" width="104" height="8" rx="4" fill="url(#gStreak)" opacity=".6"/>
+      <rect x="2" y="194" width="126" height="7" rx="3.5" fill="url(#gStreak)" opacity=".4"/>
     </g>
     <g class="box-float">
-      <ellipse cx="215" cy="192" rx="80" ry="12" fill="#043a6b" opacity=".28"/>
-      <polygon points="140,62 218,34 296,62 218,90" fill="url(#gTop)"/>
-      <polygon points="140,62 218,90 218,184 140,154" fill="url(#gFront)"/>
-      <polygon points="218,90 296,62 296,152 218,184" fill="url(#gRight)"/>
-      <polygon points="176,49 254,22 274,29 196,57" fill="#eaf5ff"/>
-      <polygon points="196,57 274,29 274,44 196,71" fill="#d5e9fc" opacity=".9"/>
-      <polygon points="188,79 214,88 214,182 188,171" fill="#f2f8ff"/>
-      <polygon points="214,88 240,79 240,173 214,182" fill="#dcecfb"/>
-      <path d="M156 128 L204 106 L186 132 L196 137 L166 146 Z" fill="#ffffff"/>
-      <path d="M156 128 L186 132 L166 146 Z" fill="#cfe6ff"/>
+      <ellipse cx="200" cy="238" rx="82" ry="13" fill="#043a6b" opacity=".26"/>
+      <!-- faces -->
+      <polygon points="200,50 280,92 200,134 120,92" fill="url(#gTop)"/>
+      <polygon points="120,92 200,134 200,229 120,187" fill="url(#gFront)"/>
+      <polygon points="200,134 280,92 280,187 200,229" fill="url(#gRight)"/>
+      <!-- top tape cross -->
+      <polygon points="168,66.8 248,108.8 232,117.2 152,75.2" fill="#eef6ff" opacity=".97"/>
+      <polygon points="232,66.8 248,66.8 168,117.2 152,108.8" fill="#dfeeff" opacity=".9"/>
+      <!-- front tape down the middle crease -->
+      <polygon points="184,125.6 200,134 200,229 184,220.6" fill="#f4f9ff"/>
+      <polygon points="200,134 216,125.6 216,220.6 200,229" fill="#dcecfb"/>
+      <!-- little folded flap at top-front -->
+      <polygon points="184,125.6 216,125.6 210,116 190,116" fill="#ffffff" opacity=".95"/>
+      <!-- edge highlights -->
+      <polyline points="120,92 200,134 280,92" fill="none" stroke="#eaf5ff" stroke-width="1.4" opacity=".5"/>
+      <line x1="200" y1="134" x2="200" y2="229" stroke="#083f78" stroke-width="1.2" opacity=".25"/>
     </g>
   </svg></div>
   <h1>طاير</h1>
