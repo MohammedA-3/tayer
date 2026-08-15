@@ -57,6 +57,19 @@ html[data-theme="dark"] .roleswitch{background:rgba(255,255,255,.08)}
 .seg2 button.on{background:var(--sky);color:#fff}
 html[dir="ltr"] .corner{left:auto;right:14px}
 html[dir="ltr"] .rolecard,html[dir="ltr"] .opt,html[dir="ltr"] .city-row,html[dir="ltr"] .pickbtn,html[dir="ltr"] .setrow .sl{text-align:left}
+/* ============ قفل التجربة (Access PIN) ============ */
+#lock{position:absolute;inset:0;z-index:500;background:#000d2b;display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;color:#fff}
+#lock.on{display:flex}
+#lock .lockbox{width:100%;max-width:320px}
+#lock .lockicon{font-size:44px;margin-bottom:16px}
+#lock h2{font-size:22px;font-weight:800;margin-bottom:6px}
+#lock p{color:#a9c0d8;font-size:15px;margin-bottom:24px;line-height:1.7}
+#lock input{width:100%;text-align:center;letter-spacing:14px;font-size:26px;font-weight:800;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.25);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px}
+#lock input:focus{outline:none;border-color:var(--sky)}
+#lock .lmsg{color:#ff9ea1;font-size:14px;height:20px;margin-bottom:8px}
+#lock button{width:100%;background:var(--sky);color:#fff;border:none;padding:16px;border-radius:16px;font-size:18px;font-weight:800;cursor:pointer;font-family:inherit}
+#lock.shake{animation:shk .4s}
+@keyframes shk{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'SF Pro AR','Segoe UI',Tahoma,sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:#dfe6ee;display:flex;justify-content:center;min-height:100vh}
 #phone{width:100%;max-width:430px;height:100vh;background:var(--bg);color:var(--ink);position:relative;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.2);overflow:hidden}
@@ -291,6 +304,16 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
 </head>
 <body>
 <div id="phone">
+<div id="lock">
+  <div class="lockbox">
+    <div class="lockicon">🔒</div>
+    <h2>التطبيق قيد التجربة</h2>
+    <p>أدخل رمز الدخول للمتابعة</p>
+    <input id="lock-in" type="password" inputmode="numeric" maxlength="6" placeholder="••••" autocomplete="off">
+    <div class="lmsg" id="lock-msg"></div>
+    <button onclick="tryUnlock()">دخول</button>
+  </div>
+</div>
 
 <!-- ======== SPLASH / ROLE PICK ======== -->
 <div id="splash">
@@ -821,6 +844,22 @@ function applyTheme(){
 }
 function setTheme(t){THEME=t;lsSet('tayer_theme',THEME);applyTheme();}
 function toggleTheme(){setTheme(THEME==='dark'?'light':'dark');}
+/* ============ قفل الدخول (رمز مُشفّر) ============ */
+var LOCK_HASH=1658582; // الرمز مخزّن مُشفّرًا (hash) — غير مقروء مباشرة من الكود
+function hashPin(s){var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0;}return h;}
+function unlockApp(){var L=document.getElementById('lock');if(L)L.classList.remove('on');}
+function tryUnlock(){
+  var el=document.getElementById('lock-in'),v=(el.value||'').trim();
+  if(hashPin(v)===LOCK_HASH){lsSet('tayer_unlocked','1');unlockApp();}
+  else{var L=document.getElementById('lock');L.classList.add('shake');document.getElementById('lock-msg').textContent='رمز غير صحيح، حاول مرة ثانية';el.value='';setTimeout(function(){L.classList.remove('shake');},450);}
+}
+function initLock(){
+  if(lsGet('tayer_unlocked')==='1')return;
+  var L=document.getElementById('lock');if(!L)return;
+  L.classList.add('on');
+  var el=document.getElementById('lock-in');
+  if(el){el.addEventListener('keydown',function(e){if(e.key==='Enter')tryUnlock();});setTimeout(function(){try{el.focus();}catch(_){}},200);}
+}
 /* إعادة عرض الشاشات الديناميكية عند تبديل اللغة (تحدّث ما يُبنى بالـJS) */
 function reflowScreens(){
   try{ if(typeof renderCityList==='function' && document.getElementById('m-city') && document.getElementById('m-city').classList.contains('on')){ const q=(document.getElementById('city-q')||{}).value||''; renderCityList(q.trim()); } }catch(e){}
@@ -1834,6 +1873,7 @@ function sendTicket(){
 function rate(n){document.querySelectorAll('#stars span').forEach((s,i)=>s.classList.toggle('on',i<n));}
 
 /* init */
+initLock();
 applyTheme();
 applyLang();
 fillCities();
