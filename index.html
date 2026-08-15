@@ -1873,7 +1873,7 @@ function sendTicket(){
 function rate(n){document.querySelectorAll('#stars span').forEach((s,i)=>s.classList.toggle('on',i<n));}
 
 /* init */
-initLock();
+/* initLock();  ← القفل معطّل مؤقتًا ليكون التطبيق مفتوحًا للشركات (ميسر وغيرها) */
 applyTheme();
 applyLang();
 fillCities();
