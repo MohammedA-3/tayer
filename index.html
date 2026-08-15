@@ -483,9 +483,9 @@ label{display:block;font-size:15px;font-weight:700;color:var(--ink);margin:2px 2
       </div>
       <label>حجم الشحنة</label>
       <select id="sr-tier" onchange="recalcStore()"></select>
-      <div class="row">
+      <div class="row" style="align-items:flex-end">
         <div><label>عدد القطع</label><input id="sr-qty" type="number" value="1" min="1" oninput="recalcStore()"></div>
-        <div><label>وزن القطعة التقريبي (كجم)</label><input id="sr-w" type="number" placeholder="120" oninput="recalcStore()"></div>
+        <div><label>وزن القطعة (كجم)</label><input id="sr-w" type="number" placeholder="120" oninput="recalcStore()"></div>
       </div>
       <label>أبعاد القطعة التقريبية (سم) — طول/عرض/ارتفاع</label>
       <div class="row">
@@ -890,7 +890,7 @@ function chargeableKg(actual,size){
 const TIERS={
   small:{t:'طرد عادي',ic:'📦',base:15,perKg:3,maxKg:20,hint:'حتى 20 كجم'},
   large:{t:'طرد كبير',ic:'📦',base:30,perKg:2.5,maxKg:60,hint:'20–60 كجم'},
-  pallet:{t:'بالتة / منصة نقالة',ic:'🗃️',base:120,perKg:1.5,maxKg:300,hint:'حتى 300 كجم'},
+  pallet:{t:'نقل ثقيل',ic:'🗃️',base:120,perKg:1.5,maxKg:300,hint:'حتى 300 كجم'},
   bulk:{t:'شحنة جملة (حمولة)',ic:'🚚',base:350,perKg:0.8,maxKg:1500,hint:'حمولة وانيت/دينة'},
 };
 /* إحداثيات مدن السعودية [lat,lng] — تغطي كل المدن الرئيسية */
